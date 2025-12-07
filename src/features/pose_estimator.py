@@ -28,7 +28,8 @@ class PoseEstimator:
         Parameters:
         frame: np.ndarray
         
-        Returns: a pose prediction for a single numpy frame. 
+        Returns: 
+            a pose prediction for a single numpy frame. 
         """
         pass
     
@@ -39,6 +40,7 @@ class PoseEstimator:
         Parameters:
             batch: a list of multiple numpy frames
             
-        Returns: predictions for each numpy frame in the batch.
+        Returns: 
+            predictions for each numpy frame in the batch.
         """
         pass
