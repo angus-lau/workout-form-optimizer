@@ -1,6 +1,5 @@
 """
-Placeholder tests to keep contracts importable.
-
+Unit tests for stubs.
 Replace with real tests once implementations land.
 """
 
