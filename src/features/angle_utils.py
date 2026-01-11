@@ -186,3 +186,46 @@ def compute_back_angle(joints: Dict[str, Tuple[float, float, float]],
         return None
     
     return compute_angle(shoulder, hip, ankle)
+
+
+def compute_elbow_angle(joints: Dict[str, Tuple[float, float, float]], 
+                        side: str = 'LEFT') -> Optional[float]:
+    """Compute elbow flexion angle from joint coordinates.
+    
+    Calculates the angle at the elbow joint formed by shoulder-elbow-wrist.
+    This measures elbow flexion/extension, where smaller angles indicate
+    more flexion (bent arm) and larger angles indicate more extension.
+    
+    Args:
+        joints: Dictionary containing joint coordinates. Expected keys:
+            - '{side}_SHOULDER': Shoulder joint coordinates (x, y, z)
+            - '{side}_ELBOW': Elbow joint coordinates (x, y, z)
+            - '{side}_WRIST': Wrist joint coordinates (x, y, z)
+        side: Body side ('LEFT' or 'RIGHT'). Default is 'LEFT'.
+            
+    Returns:
+        Elbow flexion angle in degrees (0-180), or None if required joints
+        are missing or invalid. 180° = fully extended, smaller values = more flexion.
+    """
+    if joints is None:
+        return None
+    
+    side = side.upper()
+    required_keys = [f'{side}_SHOULDER', f'{side}_ELBOW', f'{side}_WRIST']
+    if not all(key in joints for key in required_keys):
+        return None
+    
+    shoulder = joints[f'{side}_SHOULDER']
+    elbow = joints[f'{side}_ELBOW']
+    wrist = joints[f'{side}_WRIST']
+    
+    if shoulder is None or elbow is None or wrist is None:
+        return None
+    
+    if not isinstance(shoulder, tuple) or not isinstance(elbow, tuple) or not isinstance(wrist, tuple):
+        return None
+    
+    if len(shoulder) < 2 or len(elbow) < 2 or len(wrist) < 2:
+        return None
+    
+    return compute_angle(shoulder, elbow, wrist)
