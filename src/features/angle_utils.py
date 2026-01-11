@@ -154,10 +154,11 @@ def compute_back_angle(joints: Dict[str, Tuple[float, float, float]],
     
     Args:
         joints: Dictionary containing joint coordinates. Expected keys:
-            - 'shoulder': Shoulder joint coordinates (x, y, z)
-            - 'hip': Hip joint coordinates (x, y, z)
-            - 'ankle': Ankle joint coordinates (x, y, z)
-            
+           - '{side}_SHOULDER': Shoulder joint coordinates (x, y, z)
+            - '{side}_HIP': Hip joint coordinates (x, y, z)
+            - '{side}_ANKLE': Ankle joint coordinates (x, y, z)
+        side: Body side ('LEFT' or 'RIGHT'). Default is 'LEFT'.
+
     Returns:
         Back angle in degrees (0-180), or None if required joints are missing
         or invalid. 180° = straight vertical alignment, smaller angles = forward lean.
@@ -165,13 +166,15 @@ def compute_back_angle(joints: Dict[str, Tuple[float, float, float]],
     if joints is None:
         return None
     
-    required_keys = ['shoulder', 'hip', 'ankle']
+    side = side.upper()
+    required_keys = [f'{side}_SHOULDER', f'{side}_HIP', f'{side}_ANKLE']
+
     if not all(key in joints for key in required_keys):
         return None
     
-    shoulder = joints['shoulder']
-    hip = joints['hip']
-    ankle = joints['ankle']
+    shoulder = joints[f'{side}_SHOULDER']
+    hip = joints[f'{side}_HIP']
+    ankle = joints[f'{side}_ANKLE']
     
     if shoulder is None or hip is None or ankle is None:
         return None
