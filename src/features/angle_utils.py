@@ -113,7 +113,7 @@ def compute_hip_angle(joints: Dict[str, Tuple[float, float, float]],
             - '{side}_HIP': Hip joint coordinates (x, y, z)
             - '{side}_KNEE': Knee joint coordinates (x, y, z)
         side: Body side ('LEFT' or 'RIGHT'). Default is 'LEFT'.
-        
+
     Returns:
         Hip angle in degrees (0-180), or None if required joints are missing
         or invalid. Larger angles indicate more hip extension, smaller angles
@@ -122,13 +122,14 @@ def compute_hip_angle(joints: Dict[str, Tuple[float, float, float]],
     if joints is None:
         return None
     
-    required_keys = ['shoulder', 'hip', 'knee']
+    side = side.upper()
+    required_keys = [f'{side}_SHOULDER', f'{side}_HIP', f'{side}_KNEE']
     if not all(key in joints for key in required_keys):
         return None
     
-    shoulder = joints['shoulder']
-    hip = joints['hip']
-    knee = joints['knee']
+    shoulder = joints[f'{side}_SHOULDER']
+    hip = joints[f'{side}_HIP']
+    knee = joints[f'{side}_KNEE']
     
     if shoulder is None or hip is None or knee is None:
         return None
@@ -142,7 +143,8 @@ def compute_hip_angle(joints: Dict[str, Tuple[float, float, float]],
     return compute_angle(shoulder, hip, knee)
 
 
-def compute_back_angle(joints: Dict[str, Tuple[float, float, float]]) -> Optional[float]:
+def compute_back_angle(joints: Dict[str, Tuple[float, float, float]],
+                       side: str = 'LEFT') -> Optional[float]:
     """Compute back/spinal alignment angle from joint coordinates.
     
     Calculates the angle at the hip formed by shoulder-hip-ankle.
