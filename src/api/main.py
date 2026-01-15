@@ -22,14 +22,7 @@ from src.api.schemas import (
     WorkoutFeedback,
     JointAngles,
     Exercise,
-    AnalysisResult,
-)
-from src.features.pose_estimator import PoseEstimator
-from src.features.angle_utils import (
-    compute_angle,
-    compute_knee_angle,
-    compute_hip_angle,
-    compute_back_angle,
+    AnalysisResult
 )
 from src.ui.overlays import Overlays
 
