@@ -65,7 +65,16 @@ class PoseEstimator:
             list[Pose]:
                 A list of dictionaries, each with 2 keys ('joints' and 'visibility') mapping to nested dictionaries.
         """
+<<<<<<< HEAD
         if not self.backend_loaded:
             self.load_model()
              
         return self.backend.predict_batch(batch)
+=======
+        predictions = []
+        
+        for frame in batch:
+            predictions.append(self.predict_frame(frame))
+        
+        return predictions
+>>>>>>> a14bad2 (Fix import case for MediaPipe module)
