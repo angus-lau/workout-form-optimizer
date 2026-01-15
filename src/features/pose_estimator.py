@@ -1,6 +1,6 @@
 from typing import Tuple, Dict, List
 import numpy as np
-import MediaPipe as mp
+import mediapipe as mp
 
 class PoseEstimator:
     """
