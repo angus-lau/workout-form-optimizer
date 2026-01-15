@@ -12,21 +12,21 @@ class PoseEstimator:
     
     def __init__(self):
         """
-        Initialize the PoseEstimator instance. The actual model loading is not implemented in this method.
-        
-        Stub implementation.
+        Initialize the PoseEstimator instance. 
         """
-        self.model = None
-        self.model_loaded = False
+        self.backend = None
+        self.backend_loaded = False
     
     def load_model(self):
         """
-        Load the PoseEstimator model. This method will intialize and configure MediaPipe Pose model, and store it in
-        the instanece variable 'self.model'.
-        
-        Stub implementation.
+        Load and initialize the MediaPipe model into the variable 'self.backend' for use by this PoseEstimator instance. 
         """
-        self.model_loaded = True
+        if self.backend_loaded:
+            return
+        
+        self.backend = MediaPipeBackend()
+        self.backend.load()  
+        self.backend_loaded = True
     
     def predict_frame(self, frame: np.ndarray) -> Dict[str, Tuple[float, float, float]]:
         """
@@ -44,7 +44,7 @@ class PoseEstimator:
                 A dictionary with 4 keys, each with a tuple of 3 floats that represent the predicted pose.
         """
         
-        if not self.model_loaded:
+        if not self.backend_loaded:
             raise RuntimeError("PoseEstimator model not loaded. Call load_model() first.")
         
         pose = {
