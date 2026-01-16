@@ -18,7 +18,9 @@ class MediaPipeBackend:
     Stub for MediaPipe Pose. Replace with real mediapipe imports and inference.
     """
 
-    def __init__(self, model_complexity: int = 1, enable_segmentation: bool = False) -> None:
+    def __init__(
+        self, model_complexity: int = 1, enable_segmentation: bool = False
+    ) -> None:
         self.model_complexity = model_complexity
         self.enable_segmentation = enable_segmentation
         self.model = None
@@ -48,6 +50,3 @@ class MediaPipeBackend:
     def predict_batch(self, frames: list[np.ndarray]) -> list[Dict[str, JointMap]]:
         """Run pose on a list of frames (iterative stub)."""
         return [self.predict_frame(f) for f in frames]
-
-
-
