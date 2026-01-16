@@ -29,33 +29,49 @@ class PoseEstimator:
         self.backend.load()  
         self.backend_loaded = True
     
-    def predict_frame(self, frame: np.ndarray) -> Dict[str, Tuple[float, float, float]]:
+    def predict_frame(self, frame: np.ndarray) -> Dict[str, Dict]:
         """
-        Predict the pose for a single numpy frame, or returns error if model is not loaded.
+        Predict the pose for a single numpy frame.
         
-        A pose is represented by a dictionary with 4 keys (shoulder, hip, knee, ankle), 
-        each with their own corresponding (x, y, z) coordinates ranging from 0 to 1 (inclusive).
+        A pose is represented by a dictionary of 2 nested dictionaries: 'joints' and 'visibility'. 
+        
+        Both sub-dictionary contains 6 keys:
+        - 'LEFT_SHOULDER'
+        - 'RIGHT_SHOULDER'
+        - 'LEFT_HIP'
+        - 'RIGHT_HIP'
+        - 'LEFT_ANKLE'
+        - 'RIGHT_ANKLE'
+        
+        'joints' contains the pixel coordinates of the corresponding joints, and 'visibility' 
+        contains the visibility [0.0-1.0] of the corresponding joints.
         
         Parameters:
             frame: np.ndarray:
                 A NumPy array representing a single image of a person for pose estimation.
         
         Returns:
-            Dict[str, Tuple[float, float, float]]:
-                A dictionary with 4 keys, each with a tuple of 3 floats that represent the predicted pose.
+            Dict[str, Dict]:
+                A dictionary with two nested dictionaries, each with 6 keys. each with a tuple of 3 floats that represent the predicted pose.
         """
-        
         if not self.backend_loaded:
-            raise RuntimeError("PoseEstimator model not loaded. Call load_model() first.")
-        
-        pose = {
-            "shoulder": (0.5, 0.5, 0.5),
-            "hip": (0.5, 0.6, 0.5),
-            "knee": (0.5, 0.7, 0.5),
-            "ankle": (0.5, 0.8, 0.5)
-        }
+            self.backend.load()
+            self.backend_loaded = True
+            
+        pose = self.backend.predict_frame(frame)
         
         return pose
+        
+        
+        
+        # pose = {
+        #     "shoulder": (0.5, 0.5, 0.5),
+        #     "hip": (0.5, 0.6, 0.5),
+        #     "knee": (0.5, 0.7, 0.5),
+        #     "ankle": (0.5, 0.8, 0.5)
+        # }
+        
+        # return pose
     
     def predict_batch(self, batch: List[np.ndarray]) -> List[Dict[str, Tuple[float, float, float]]]:
         """
@@ -72,9 +88,13 @@ class PoseEstimator:
                 A list of dictionaries, each with 4 keys and a tuple of 3 floats that 
                 represent the predicted pose.
         """
+        if not self.backend_loaded:
+            self.backend.load()
+            self.backend_loaded = True
+             
         predictions = []
         
         for frame in batch:
-            predictions.append(self.predict_frame(frame))
+            predictions.append(self.backend.predict_frame(frame))
         
         return predictions
