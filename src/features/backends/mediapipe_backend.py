@@ -115,6 +115,7 @@ class MediaPipeBackend:
     Falls back to stub mode if MediaPipe fails to load.
     """
 
+<<<<<<< HEAD
     def __init__(self, model_complexity: int = 1, enable_segmentation: bool = False) -> None:
         """
         Initialize MediaPipe backend.
@@ -126,6 +127,11 @@ class MediaPipeBackend:
                 - 2: Heavy model (slowest, most accurate)
             enable_segmentation: Whether to enable body segmentation masks
         """
+=======
+    def __init__(
+        self, model_complexity: int = 1, enable_segmentation: bool = False
+    ) -> None:
+>>>>>>> 71d2feb (fix code format)
         self.model_complexity = model_complexity
         self.enable_segmentation = enable_segmentation
         self.landmarker: Optional[vision.PoseLandmarker] = None
@@ -293,7 +299,10 @@ class MediaPipeBackend:
     def predict_batch(self, frames: list[np.ndarray]) -> list[Dict[str, JointMap]]:
         """Run pose on a list of frames (iterative)."""
         return [self.predict_frame(f) for f in frames]
+<<<<<<< HEAD
 
 
 
 >>>>>>> bd5c84d (Woking camera and video input with mediapipe 10.31)
+=======
+>>>>>>> 71d2feb (fix code format)

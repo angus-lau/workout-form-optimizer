@@ -1,8 +1,8 @@
 import os
-import csv 
+import csv
 
-raw_dir = os.path.join(os.path.dirname(__file__), 'raw_data')
-processed_dir = os.path.join(os.path.dirname(__file__), 'processed_data')
+raw_dir = os.path.join(os.path.dirname(__file__), "raw_data")
+processed_dir = os.path.join(os.path.dirname(__file__), "processed_data")
 
 labels = {
     "squat1.mp4": {"exercise": "squat", "form": "good"},
@@ -21,17 +21,21 @@ for raw_file in os.listdir(raw_dir):
 
     label_info = labels.get(raw_file, {"exercise": "unknown", "form": "unknown"})
 
-    metadata.append({
-        "id": raw_file.replace(".mp4", ""),
-        "exercise": label_info["exercise"],
-        "form": label_info["form"],
-        "raw_path": raw_path,
-        "processed_path": processed_path,
-    })
+    metadata.append(
+        {
+            "id": raw_file.replace(".mp4", ""),
+            "exercise": label_info["exercise"],
+            "form": label_info["form"],
+            "raw_path": raw_path,
+            "processed_path": processed_path,
+        }
+    )
 
-    csv_file = os.path.join(os.path.dirname(__file__), 'metadata.csv')
-    with open(csv_file, mode='w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=["id", "exercise", "form", "raw_path", "processed_path"])
+    csv_file = os.path.join(os.path.dirname(__file__), "metadata.csv")
+    with open(csv_file, mode="w", newline="") as f:
+        writer = csv.DictWriter(
+            f, fieldnames=["id", "exercise", "form", "raw_path", "processed_path"]
+        )
         writer.writeheader()
         for data in metadata:
             writer.writerow(data)

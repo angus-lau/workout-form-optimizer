@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 
+<<<<<<< HEAD
 # Add project root to Python path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -24,6 +25,10 @@ def _convert_joints_to_pixels(
     frame_width: int,
     frame_height: int
 ) -> Tuple[Dict[str, Tuple[int, int]], Dict[str, Tuple[float, float]]]:
+=======
+
+def opencv() -> None:
+>>>>>>> 71d2feb (fix code format)
     """
     Convert MediaPipe joints to pixel coordinates for drawing and normalized coordinates for angle calculation.
     
@@ -183,6 +188,10 @@ def opencv() -> None:
     
     # Try to find a working camera
     for i in range(5):
+<<<<<<< HEAD
+=======
+        # cycles through the possible camera input options
+>>>>>>> 71d2feb (fix code format)
         capture = cv.VideoCapture(i)
         
         if not capture.isOpened():
@@ -322,6 +331,7 @@ def process_video(video_path: str, exercise_type: Optional[str] = None, output_p
     
     try:
         while True:
+<<<<<<< HEAD
             if not paused:
                 ret, frame = capture.read()
                 if not ret or frame is None:
@@ -374,6 +384,17 @@ def process_video(video_path: str, exercise_type: Optional[str] = None, output_p
             key = cv.waitKey(frame_delay) & 0xFF
             if key == ord('q') or key == 27:  # 'q' or ESC
                 print("Quitting...")
+=======
+            is_true, frame = capture.read()
+            if not is_true:
+                print("Failed to read frame")
+                break
+
+            cv.imshow("Webcam", frame)
+
+            # press q to exit the webcam and release all the capture frames
+            if cv.waitKey(20) & 0xFF == ord("q"):
+>>>>>>> 71d2feb (fix code format)
                 break
             elif key == ord(' '):  # SPACE to pause/resume
                 paused = not paused
@@ -393,7 +414,10 @@ def process_video(video_path: str, exercise_type: Optional[str] = None, output_p
             print(f"Output video saved to: {output_path}")
         cv.destroyAllWindows()
         cv.waitKey(1)
+<<<<<<< HEAD
 
 
 if __name__ == "__main__":
     opencv()
+=======
+>>>>>>> 71d2feb (fix code format)
