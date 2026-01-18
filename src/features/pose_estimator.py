@@ -1,6 +1,6 @@
 from typing import Tuple, Dict, List
 import numpy as np
-from features.backends.mediapipe_backend import MediaPipeBackend
+from .backends.mediapipe_backend import MediaPipeBackend
 
 JointMap = Dict[str, Tuple[float, float]]    # Joint name to (x, y) coordinates
 VisibilityMap = Dict[str, float]             # Joint name to visibility score
