@@ -58,9 +58,9 @@ class PoseEstimator:
             self.backend.load()
             self.backend_loaded = True
             
-        pose = self.backend.predict_frame(frame)
+        return self.backend.predict_frame(frame)
         
-        return pose
+
         
         
         
@@ -92,9 +92,4 @@ class PoseEstimator:
             self.backend.load()
             self.backend_loaded = True
              
-        predictions = []
-        
-        for frame in batch:
-            predictions.append(self.backend.predict_frame(frame))
-        
-        return predictions
+        return self.backend.predict_batch(batch)
