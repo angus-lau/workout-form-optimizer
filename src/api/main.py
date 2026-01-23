@@ -12,6 +12,8 @@ import cv2
 import numpy as np
 from typing import List, Dict, Optional
 import io
+from datetime import datetime
+import uuid
 
 from src.api.schemas import (
     PoseData,
@@ -19,6 +21,8 @@ from src.api.schemas import (
     FormAnalysisResponse,
     WorkoutFeedback,
     JointAngles,
+    Exercise,
+    AnalysisResult,
 )
 from src.features.pose_estimator import PoseEstimator
 from src.features.angle_utils import (
@@ -49,6 +53,9 @@ app.add_middleware(
 pose_estimator = None
 overlays = None
 
+# In-memory storage for analysis results (for now - can migrate to database later)
+analysis_storage: Dict[str, AnalysisResult] = {}
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -77,6 +84,97 @@ async def health_check():
         "status": "healthy",
         "model_loaded": pose_estimator.model_loaded if pose_estimator else False,
     }
+
+
+# ==================== Exercise Endpoints ====================
+
+
+@app.get("/api/exercises", response_model=List[Exercise])
+async def list_exercises() -> List[Exercise]:
+    """
+    Get the list of available exercises.
+
+    Returns:
+        List of exercises with metadata
+    """
+    return [
+        Exercise(
+            id="squat",
+            name="Squat",
+            description="Lower body compound exercise",
+            key_areas=["knees", "hips", "back"]
+        ),
+        Exercise(
+            id="deadlift",
+            name="Deadlift",
+            description="Full body compound exercise",
+            key_areas=["knees", "hips", "back"]
+        ),
+        Exercise(
+            id="benchpress",
+            name="Bench Press",
+            description="Upper body compound exercise",
+            key_areas=["back", "shoulders", "chest"]
+        ),
+    ]
+
+
+@app.get("/api/exercises/{exercise_id}", response_model=Exercise)
+async def get_exercise(exercise_id: str) -> Exercise:
+    """
+    Get details for a specific exercise.
+
+    Args:
+        exercise_id: Exercise identifier (squat, deadlift, benchpress)
+
+    Returns:
+        Exercise metadata
+    """
+    exercises = {
+        "squat": Exercise(
+            id="squat",
+            name="Squat",
+            description="Lower body compound exercise targeting quads, glutes, and hamstrings",
+            key_areas=["knees", "hips", "back"]
+        ),
+        "deadlift": Exercise(
+            id="deadlift",
+            name="Deadlift",
+            description="Full body compound exercise targeting posterior chain",
+            key_areas=["knees", "hips", "back"]
+        ),
+        "benchpress": Exercise(
+            id="benchpress",
+            name="Bench Press",
+            description="Upper body compound exercise targeting chest, shoulders, and triceps",
+            key_areas=["back", "shoulders", "chest"]
+        ),
+    }
+    
+    if exercise_id not in exercises:
+        raise HTTPException(status_code=404, detail=f"Exercise '{exercise_id}' not found")
+    
+    return exercises[exercise_id]
+
+
+# ==================== Analysis Endpoints ====================
+
+
+@app.get("/api/analysis/{analysis_id}", response_model=AnalysisResult)
+async def get_analysis(analysis_id: str) -> AnalysisResult:
+    """
+    Fetch the results of a past analysis.
+
+    Args:
+        analysis_id: Unique identifier of the analysis
+
+    Returns:
+        Analysis results with form scores and feedback
+    """
+    if analysis_id not in analysis_storage:
+        raise HTTPException(status_code=404, detail=f"Analysis '{analysis_id}' not found")
+    
+    return analysis_storage[analysis_id]
 
 
 # ==================== Pose Estimation Endpoints ====================
@@ -180,13 +278,24 @@ async def analyze_form(request: FormAnalysisRequest) -> FormAnalysisResponse:
         # Calculate overall form score
         form_score = _calculate_form_score(joint_angles, feedback)
 
-        return FormAnalysisResponse(
+        # Store result and get analysis ID
+        analysis_id = _store_analysis_result(
+            request.exercise_type,
+            form_score,
+            joint_angles,
+            feedback
+        )
+
+        response = FormAnalysisResponse(
             exercise_type=request.exercise_type,
             form_score=form_score,
             joint_angles=joint_angles,
             feedback=feedback,
             status="success",
+            analysis_id=analysis_id
         )
+        
+        return response
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -304,6 +413,38 @@ async def analyze_benchpress(file: UploadFile = File(...)) -> FormAnalysisRespon
 
 
 # ==================== Helper Functions ====================
+
+
+def _store_analysis_result(
+    exercise_type: str,
+    form_score: float,
+    joint_angles: JointAngles,
+    feedback: List[WorkoutFeedback]
+) -> str:
+    """
+    Store analysis result and return its ID.
+    
+    Args:
+        exercise_type: Type of exercise analyzed
+        form_score: Overall form score
+        joint_angles: Calculated joint angles
+        feedback: Form feedback items
+    
+    Returns:
+        Analysis ID for retrieval
+    """
+    analysis_id = str(uuid.uuid4())
+    analysis_result = AnalysisResult(
+        analysis_id=analysis_id,
+        exercise_type=exercise_type,
+        form_score=form_score,
+        joint_angles=joint_angles,
+        feedback=feedback,
+        timestamp=datetime.utcnow().isoformat(),
+        status="success"
+    )
+    analysis_storage[analysis_id] = analysis_result
+    return analysis_id
 
 
 def _calculate_joint_angles(pose: Dict) -> JointAngles:

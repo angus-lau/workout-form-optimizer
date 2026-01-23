@@ -64,3 +64,25 @@ class FormAnalysisResponse(BaseModel):
     joint_angles: JointAngles = Field(..., description="Calculated joint angles")
     feedback: List[WorkoutFeedback] = Field(..., description="Form feedback items")
     status: str = Field(..., description="Analysis status")
+    analysis_id: Optional[str] = Field(None, description="ID for retrieving this analysis later")
+
+
+class Exercise(BaseModel):
+    """Exercise metadata."""
+
+    id: str = Field(..., description="Exercise identifier (squat, deadlift, benchpress)")
+    name: str = Field(..., description="Exercise display name")
+    description: str = Field(..., description="Exercise description")
+    key_areas: List[str] = Field(..., description="Key body areas for this exercise")
+
+
+class AnalysisResult(BaseModel):
+    """Stored analysis result."""
+
+    analysis_id: str = Field(..., description="Unique analysis identifier")
+    exercise_type: str = Field(..., description="Type of exercise analyzed")
+    form_score: float = Field(..., description="Overall form score (0-100)")
+    joint_angles: JointAngles = Field(..., description="Calculated joint angles")
+    feedback: List[WorkoutFeedback] = Field(..., description="Form feedback items")
+    timestamp: str = Field(..., description="ISO format timestamp of analysis")
+    status: str = Field(..., description="Analysis status")
