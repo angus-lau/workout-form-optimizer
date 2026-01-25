@@ -1,6 +1,6 @@
 from typing import Tuple, Dict, List
 import numpy as np
-
+import mediapipe as mp
 
 class PoseEstimator:
     """
@@ -79,5 +79,5 @@ class PoseEstimator:
 
         for frame in batch:
             predictions.append(self.predict_frame(frame))
-
+        
         return predictions
