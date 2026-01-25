@@ -1,75 +1,108 @@
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Optional
 import numpy as np
-import mediapipe as mp
+
+from src.features.backends.mediapipe_backend import MediaPipeBackend
+
 
 class PoseEstimator:
     """
-    PoseEstimator class for estimating poses in images using MediaPipe. 
+    High-level pose estimation interface.
     
-    This class defines the interface for loading a pose estimation model and predicting 
-    poses for single frames or batches of frames.
+    This class provides a clean interface for pose estimation, abstracting away
+    the backend implementation details. It uses MediaPipeBackend internally
+    and transforms the output to a simplified format.
     """
     
-    def __init__(self):
+    def __init__(self, model_complexity: int = 1, enable_segmentation: bool = False):
         """
-        Initialize the PoseEstimator instance. The actual model loading is not implemented in this method.
+        Initialize the PoseEstimator with a backend.
         
-        Stub implementation.
+        Args:
+            model_complexity: Model complexity level (0=lite, 1=full, 2=heavy)
+            enable_segmentation: Whether to enable body segmentation masks
         """
-        self.model = None
+        self.backend = MediaPipeBackend(model_complexity=model_complexity, enable_segmentation=enable_segmentation)
         self.model_loaded = False
     
-    def load_model(self):
+    def load_model(self) -> None:
         """
-        Load the PoseEstimator model. This method will intialize and configure MediaPipe Pose model, and store it in
-        the instanece variable 'self.model'.
+        Load the pose estimation model.
         
-        Stub implementation.
+        Initializes and configures the backend model.
         """
+        self.backend.load()
         self.model_loaded = True
     
     def predict_frame(self, frame: np.ndarray) -> Dict[str, Tuple[float, float, float]]:
         """
-        Predict the pose for a single numpy frame, or returns error if model is not loaded.
+        Predict the pose for a single numpy frame.
         
         A pose is represented by a dictionary with 4 keys (shoulder, hip, knee, ankle), 
         each with their own corresponding (x, y, z) coordinates ranging from 0 to 1 (inclusive).
         
-        Parameters:
-            frame: np.ndarray:
-                A NumPy array representing a single image of a person for pose estimation.
+        Args:
+            frame: A NumPy array representing a single image (BGR format from OpenCV)
         
         Returns:
-            Dict[str, Tuple[float, float, float]]:
-                A dictionary with 4 keys, each with a tuple of 3 floats that represent the predicted pose.
+            Dictionary with 4 keys ('shoulder', 'hip', 'knee', 'ankle'), each with 
+            a tuple of 3 floats (x, y, z) that represent the predicted pose in normalized coordinates.
+            Returns empty dict if pose cannot be detected.
         """
-        
         if not self.model_loaded:
-            raise RuntimeError("PoseEstimator model not loaded. Call load_model() first.")
+            self.load_model()
         
-        pose = {
-            "shoulder": (0.5, 0.5, 0.5),
-            "hip": (0.5, 0.6, 0.5),
-            "knee": (0.5, 0.7, 0.5),
-            "ankle": (0.5, 0.8, 0.5)
-        }
+        # Get pose detection from backend
+        result = self.backend.predict_frame(frame)
+        joints_dict = result.get("joints", {})
         
-        return pose
+        # Convert MediaPipe joints to generic format (averaging left/right)
+        # This is for compatibility with the expected return format
+        if not joints_dict:
+            return {}
+        
+        # Average left/right joints to create generic joints
+        def get_avg_joint(left_key: str, right_key: str) -> Optional[Tuple[float, float, float]]:
+            left = joints_dict.get(left_key)
+            right = joints_dict.get(right_key)
+            
+            if left and right:
+                x = (left[0] + right[0]) / 2.0
+                y = (left[1] + right[1]) / 2.0
+                return (x, y, 0.0)
+            elif left:
+                return (left[0], left[1], 0.0)
+            elif right:
+                return (right[0], right[1], 0.0)
+            return None
+        
+        shoulder = get_avg_joint("LEFT_SHOULDER", "RIGHT_SHOULDER")
+        hip = get_avg_joint("LEFT_HIP", "RIGHT_HIP")
+        knee = get_avg_joint("LEFT_KNEE", "RIGHT_KNEE")
+        ankle = get_avg_joint("LEFT_ANKLE", "RIGHT_ANKLE")
+        
+        if shoulder and hip and knee and ankle:
+            return {
+                "shoulder": shoulder,
+                "hip": hip,
+                "knee": knee,
+                "ankle": ankle
+            }
+        
+        # Return empty dict if no pose detected
+        return {}
     
     def predict_batch(self, batch: List[np.ndarray]) -> List[Dict[str, Tuple[float, float, float]]]:
         """
-        Predict a pose for a batch of numpy frames.
+        Predict poses for a batch of numpy frames.
         
         Calls predict_frame repeatedly for each frame in the batch.
         
-        Parameters:
-            batch: list[np.ndarray]:
-                A list of NumPy frames, each representing a single image of a person for pose estimation.
-            
+        Args:
+            batch: A list of NumPy frames, each representing a single image
+        
         Returns: 
-            list[Dict[str, Tuple[float, float, float]]]:
-                A list of dictionaries, each with 4 keys and a tuple of 3 floats that 
-                represent the predicted pose.
+            A list of dictionaries, each with 4 keys and a tuple of 3 floats that 
+            represent the predicted pose.
         """
         predictions = []
         

@@ -55,123 +55,184 @@ def compute_angle(a: Tuple[float, float, float],
     return angle_degrees
 
 
-def compute_knee_angle(joints: Dict[str, Tuple[float, float, float]]) -> Optional[float]:
-    """Compute knee flexion angle from joint coordinates.
+def compute_back_angle(joints: Dict[str, Tuple[float, float]]) -> Optional[float]:
+    """Compute back/spinal alignment angle from MediaPipe joint coordinates.
     
-    Calculates the angle at the knee joint formed by hip-knee-ankle.
-    This measures knee flexion/extension, where smaller angles indicate
-    more flexion (bent knee) and larger angles indicate more extension.
-    
-    Args:
-        joints: Dictionary containing joint coordinates. Expected keys:
-            - 'hip': Hip joint coordinates (x, y, z)
-            - 'knee': Knee joint coordinates (x, y, z)
-            - 'ankle': Ankle joint coordinates (x, y, z)
-            
-    Returns:
-        Knee flexion angle in degrees (0-180), or None if required joints
-        are missing or invalid. 180° = fully extended, smaller values = more flexion.
-    """
-    if joints is None:
-        return None
-    
-    required_keys = ['hip', 'knee', 'ankle']
-    if not all(key in joints for key in required_keys):
-        return None
-    
-    hip = joints['hip']
-    knee = joints['knee']
-    ankle = joints['ankle']
-    
-    if hip is None or knee is None or ankle is None:
-        return None
-    
-    if not isinstance(hip, tuple) or not isinstance(knee, tuple) or not isinstance(ankle, tuple):
-        return None
-    
-    if len(hip) < 2 or len(knee) < 2 or len(ankle) < 2:
-        return None
-    
-    return compute_angle(hip, knee, ankle)
-
-
-def compute_hip_angle(joints: Dict[str, Tuple[float, float, float]]) -> Optional[float]:
-    """Compute hip angle from joint coordinates.
-    
-    Calculates the angle at the hip joint formed by shoulder-hip-knee.
-    This measures hip flexion/extension, useful for assessing squat depth,
-    deadlift form, and overall hip mobility.
-    
-    Args:
-        joints: Dictionary containing joint coordinates. Expected keys:
-            - 'shoulder': Shoulder joint coordinates (x, y, z)
-            - 'hip': Hip joint coordinates (x, y, z)
-            - 'knee': Knee joint coordinates (x, y, z)
-            
-    Returns:
-        Hip angle in degrees (0-180), or None if required joints are missing
-        or invalid. Larger angles indicate more hip extension, smaller angles
-        indicate more hip flexion.
-    """
-    if joints is None:
-        return None
-    
-    required_keys = ['shoulder', 'hip', 'knee']
-    if not all(key in joints for key in required_keys):
-        return None
-    
-    shoulder = joints['shoulder']
-    hip = joints['hip']
-    knee = joints['knee']
-    
-    if shoulder is None or hip is None or knee is None:
-        return None
-    
-    if not isinstance(shoulder, tuple) or not isinstance(hip, tuple) or not isinstance(knee, tuple):
-        return None
-    
-    if len(shoulder) < 2 or len(hip) < 2 or len(knee) < 2:
-        return None
-    
-    return compute_angle(shoulder, hip, knee)
-
-
-def compute_back_angle(joints: Dict[str, Tuple[float, float, float]]) -> Optional[float]:
-    """Compute back/spinal alignment angle from joint coordinates.
-    
-    Calculates the angle at the hip formed by shoulder-hip-ankle.
+    Calculates the angle at the hip formed by shoulder-hip-ankle using averaged positions.
     This measures spinal alignment and back posture, where angles close
     to 180° indicate a straight/neutral spine, and deviations indicate
     forward lean or rounding.
     
     Args:
-        joints: Dictionary containing joint coordinates. Expected keys:
-            - 'shoulder': Shoulder joint coordinates (x, y, z)
-            - 'hip': Hip joint coordinates (x, y, z)
-            - 'ankle': Ankle joint coordinates (x, y, z)
+        joints: Dictionary with MediaPipe joint names as keys and normalized (x, y) coordinates.
+                Expected keys: 'LEFT_SHOULDER', 'RIGHT_SHOULDER', 'LEFT_HIP', 'RIGHT_HIP',
+                'LEFT_ANKLE', 'RIGHT_ANKLE'
             
     Returns:
-        Back angle in degrees (0-180), or None if required joints are missing
-        or invalid. 180° = straight vertical alignment, smaller angles = forward lean.
+        Back angle in degrees (0-180), or None if required joints are missing.
+        180° = straight vertical alignment, smaller angles = forward lean.
     """
     if joints is None:
         return None
     
-    required_keys = ['shoulder', 'hip', 'ankle']
-    if not all(key in joints for key in required_keys):
-        return None
+    # Get left and right joints
+    left_shoulder = joints.get("LEFT_SHOULDER")
+    right_shoulder = joints.get("RIGHT_SHOULDER")
+    left_hip = joints.get("LEFT_HIP")
+    right_hip = joints.get("RIGHT_HIP")
+    left_ankle = joints.get("LEFT_ANKLE")
+    right_ankle = joints.get("RIGHT_ANKLE")
     
-    shoulder = joints['shoulder']
-    hip = joints['hip']
-    ankle = joints['ankle']
+    # Average left and right to get center positions
+    shoulder = None
+    hip = None
+    ankle = None
+    
+    if left_shoulder and right_shoulder:
+        shoulder = ((left_shoulder[0] + right_shoulder[0]) / 2.0, 
+                   (left_shoulder[1] + right_shoulder[1]) / 2.0, 0.0)
+    elif left_shoulder:
+        shoulder = (left_shoulder[0], left_shoulder[1], 0.0)
+    elif right_shoulder:
+        shoulder = (right_shoulder[0], right_shoulder[1], 0.0)
+    
+    if left_hip and right_hip:
+        hip = ((left_hip[0] + right_hip[0]) / 2.0, 
+              (left_hip[1] + right_hip[1]) / 2.0, 0.0)
+    elif left_hip:
+        hip = (left_hip[0], left_hip[1], 0.0)
+    elif right_hip:
+        hip = (right_hip[0], right_hip[1], 0.0)
+    
+    if left_ankle and right_ankle:
+        ankle = ((left_ankle[0] + right_ankle[0]) / 2.0, 
+                (left_ankle[1] + right_ankle[1]) / 2.0, 0.0)
+    elif left_ankle:
+        ankle = (left_ankle[0], left_ankle[1], 0.0)
+    elif right_ankle:
+        ankle = (right_ankle[0], right_ankle[1], 0.0)
     
     if shoulder is None or hip is None or ankle is None:
         return None
     
-    if not isinstance(shoulder, tuple) or not isinstance(hip, tuple) or not isinstance(ankle, tuple):
-        return None
-    
-    if len(shoulder) < 2 or len(hip) < 2 or len(ankle) < 2:
-        return None
-    
     return compute_angle(shoulder, hip, ankle)
+
+
+def compute_left_knee_angle(joints: Dict[str, Tuple[float, float]]) -> Optional[float]:
+    """Compute left knee flexion angle from MediaPipe joint coordinates.
+    
+    Calculates the angle at the left knee joint formed by left_hip-left_knee-left_ankle.
+    
+    Args:
+        joints: Dictionary with MediaPipe joint names as keys and normalized (x, y) coordinates.
+                Expected keys: 'LEFT_HIP', 'LEFT_KNEE', 'LEFT_ANKLE'
+            
+    Returns:
+        Left knee flexion angle in degrees (0-180), or None if required joints are missing.
+    """
+    if joints is None:
+        return None
+    
+    left_hip = joints.get("LEFT_HIP")
+    left_knee = joints.get("LEFT_KNEE")
+    left_ankle = joints.get("LEFT_ANKLE")
+    
+    if not all([left_hip, left_knee, left_ankle]):
+        return None
+    
+    # Convert to (x, y, z) format for compute_angle
+    hip_3d = (left_hip[0], left_hip[1], 0.0)
+    knee_3d = (left_knee[0], left_knee[1], 0.0)
+    ankle_3d = (left_ankle[0], left_ankle[1], 0.0)
+    
+    return compute_angle(hip_3d, knee_3d, ankle_3d)
+
+
+def compute_right_knee_angle(joints: Dict[str, Tuple[float, float]]) -> Optional[float]:
+    """Compute right knee flexion angle from MediaPipe joint coordinates.
+    
+    Calculates the angle at the right knee joint formed by right_hip-right_knee-right_ankle.
+    
+    Args:
+        joints: Dictionary with MediaPipe joint names as keys and normalized (x, y) coordinates.
+                Expected keys: 'RIGHT_HIP', 'RIGHT_KNEE', 'RIGHT_ANKLE'
+            
+    Returns:
+        Right knee flexion angle in degrees (0-180), or None if required joints are missing.
+    """
+    if joints is None:
+        return None
+    
+    right_hip = joints.get("RIGHT_HIP")
+    right_knee = joints.get("RIGHT_KNEE")
+    right_ankle = joints.get("RIGHT_ANKLE")
+    
+    if not all([right_hip, right_knee, right_ankle]):
+        return None
+    
+    # Convert to (x, y, z) format for compute_angle
+    hip_3d = (right_hip[0], right_hip[1], 0.0)
+    knee_3d = (right_knee[0], right_knee[1], 0.0)
+    ankle_3d = (right_ankle[0], right_ankle[1], 0.0)
+    
+    return compute_angle(hip_3d, knee_3d, ankle_3d)
+
+
+def compute_left_hip_angle(joints: Dict[str, Tuple[float, float]]) -> Optional[float]:
+    """Compute left hip angle from MediaPipe joint coordinates.
+    
+    Calculates the angle at the left hip joint formed by left_shoulder-left_hip-left_knee.
+    
+    Args:
+        joints: Dictionary with MediaPipe joint names as keys and normalized (x, y) coordinates.
+                Expected keys: 'LEFT_SHOULDER', 'LEFT_HIP', 'LEFT_KNEE'
+            
+    Returns:
+        Left hip angle in degrees (0-180), or None if required joints are missing.
+    """
+    if joints is None:
+        return None
+    
+    left_shoulder = joints.get("LEFT_SHOULDER")
+    left_hip = joints.get("LEFT_HIP")
+    left_knee = joints.get("LEFT_KNEE")
+    
+    if not all([left_shoulder, left_hip, left_knee]):
+        return None
+    
+    # Convert to (x, y, z) format for compute_angle
+    shoulder_3d = (left_shoulder[0], left_shoulder[1], 0.0)
+    hip_3d = (left_hip[0], left_hip[1], 0.0)
+    knee_3d = (left_knee[0], left_knee[1], 0.0)
+    
+    return compute_angle(shoulder_3d, hip_3d, knee_3d)
+
+
+def compute_right_hip_angle(joints: Dict[str, Tuple[float, float]]) -> Optional[float]:
+    """Compute right hip angle from MediaPipe joint coordinates.
+    
+    Calculates the angle at the right hip joint formed by right_shoulder-right_hip-right_knee.
+    
+    Args:
+        joints: Dictionary with MediaPipe joint names as keys and normalized (x, y) coordinates.
+                Expected keys: 'RIGHT_SHOULDER', 'RIGHT_HIP', 'RIGHT_KNEE'
+            
+    Returns:
+        Right hip angle in degrees (0-180), or None if required joints are missing.
+    """
+    if joints is None:
+        return None
+    
+    right_shoulder = joints.get("RIGHT_SHOULDER")
+    right_hip = joints.get("RIGHT_HIP")
+    right_knee = joints.get("RIGHT_KNEE")
+    
+    if not all([right_shoulder, right_hip, right_knee]):
+        return None
+    
+    # Convert to (x, y, z) format for compute_angle
+    shoulder_3d = (right_shoulder[0], right_shoulder[1], 0.0)
+    hip_3d = (right_hip[0], right_hip[1], 0.0)
+    knee_3d = (right_knee[0], right_knee[1], 0.0)
+    
+    return compute_angle(shoulder_3d, hip_3d, knee_3d)
