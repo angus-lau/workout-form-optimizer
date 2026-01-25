@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 class Overlays:
     """
     Class for drawing pose overlays on video frame
@@ -26,32 +27,33 @@ class Overlays:
             ("LEFT_ELBOW", "LEFT_WRIST"),
             ("RIGHT_SHOULDER", "RIGHT_ELBOW"),
             ("RIGHT_ELBOW", "RIGHT_WRIST"),
-
             # Torso
             ("LEFT_SHOULDER", "LEFT_HIP"),
             ("RIGHT_SHOULDER", "RIGHT_HIP"),
             ("LEFT_HIP", "RIGHT_HIP"),
-
             # Legs
             ("LEFT_HIP", "LEFT_KNEE"),
             ("LEFT_KNEE", "LEFT_ANKLE"),
             ("RIGHT_HIP", "RIGHT_KNEE"),
             ("RIGHT_KNEE", "RIGHT_ANKLE"),
-
             # Feet
             ("LEFT_ANKLE", "LEFT_HEEL"),
             ("LEFT_HEEL", "LEFT_FOOT_INDEX"),
             ("RIGHT_ANKLE", "RIGHT_HEEL"),
             ("RIGHT_HEEL", "RIGHT_FOOT_INDEX"),
-
             # Face
             ("NOSE", "LEFT_EYE"),
             ("NOSE", "RIGHT_EYE"),
             ("LEFT_EYE", "LEFT_EAR"),
             ("RIGHT_EYE", "RIGHT_EAR"),
         ]
-        
-    def draw_skeleton(self, frame: np.ndarray, joints: dict[str, tuple[int, int]], angles: dict[str, float] | None = None) -> None:
+
+    def draw_skeleton(
+        self,
+        frame: np.ndarray,
+        joints: dict[str, tuple[int, int]],
+        angles: dict[str, float] | None = None,
+    ) -> None:
         """
         Draw a full pose skeleton, including joints and angle labels.
 
@@ -70,7 +72,9 @@ class Overlays:
             angles = {}
 
         for key, coord in joints.items():
-            cv2.circle(frame, coord, self.joint_radius, self.joint_color, self.joint_thickness)
+            cv2.circle(
+                frame, coord, self.joint_radius, self.joint_color, self.joint_thickness
+            )
 
             if angles.get(key) is not None:
                 # Position angle text: left joints on left, right joints on right
@@ -85,12 +89,14 @@ class Overlays:
                     # Default: position to the right
                     x = coord[0] + 10
                 y = coord[1]
-                self.draw_angle(frame, angles.get(key), (x, y)) 
+                self.draw_angle(frame, angles.get(key), (x, y))
 
-    def draw_connections(self, frame: np.ndarray, joints: dict[str, tuple[int, int]]) -> None:
+    def draw_connections(
+        self, frame: np.ndarray, joints: dict[str, tuple[int, int]]
+    ) -> None:
         """
         Draw all skeleton lines between connected joints. Helper
-        
+
         Parameters:
             frame:
                 The image to draw on
@@ -103,9 +109,11 @@ class Overlays:
             pt2 = joints.get(i[1])
             if pt1 is None or pt2 is None:
                 continue
-            cv2.line(frame, pt1, pt2, self.skeleton_color, self.skeleton_thickness) 
+            cv2.line(frame, pt1, pt2, self.skeleton_color, self.skeleton_thickness)
 
-    def draw_angle(self, frame: np.ndarray, angle: float, coord: tuple[int, int]) -> None:
+    def draw_angle(
+        self, frame: np.ndarray, angle: float, coord: tuple[int, int]
+    ) -> None:
         """
         Draw an angle value at coordinate.
 
@@ -120,8 +128,15 @@ class Overlays:
         if angle is None:
             return
         text = str(int(round(angle)))
-        cv2.putText(frame, text, coord, self.text_font, self.text_scale, self.text_color, self.text_thickness)
-
+        cv2.putText(
+            frame,
+            text,
+            coord,
+            self.text_font,
+            self.text_scale,
+            self.text_color,
+            self.text_thickness,
+        )
 
     def feedback_text(self, frame: np.ndarray, msg: str) -> None:
         """
@@ -134,9 +149,18 @@ class Overlays:
                 The message string to display
         """
         height, width, _ = frame.shape
-        (text_width, _), _ = cv2.getTextSize(msg, self.text_font, self.text_scale, self.text_thickness)
+        (text_width, _), _ = cv2.getTextSize(
+            msg, self.text_font, self.text_scale, self.text_thickness
+        )
         centerX = int((width - text_width) // 2)
 
-        y = int(height - height/10)
-        cv2.putText(frame, msg, (centerX, y), self.text_font, self.text_scale, self.text_color, self.text_thickness)
-        
+        y = int(height - height / 10)
+        cv2.putText(
+            frame,
+            msg,
+            (centerX, y),
+            self.text_font,
+            self.text_scale,
+            self.text_color,
+            self.text_thickness,
+        )

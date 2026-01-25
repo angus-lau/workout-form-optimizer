@@ -224,6 +224,3 @@ class MediaPipeBackend:
     def predict_batch(self, frames: list[np.ndarray]) -> list[Dict[str, JointMap]]:
         """Run pose on a list of frames (iterative)."""
         return [self.predict_frame(f) for f in frames]
-
-
-
