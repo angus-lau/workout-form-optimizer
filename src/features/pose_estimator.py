@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Optional
 import numpy as np
 from .backends.mediapipe_backend import MediaPipeBackend
 
@@ -8,20 +8,21 @@ Pose = Dict[str, JointMap | VisibilityMap]   # Dictionary: {'joints': JointMap, 
 
 class PoseEstimator:
     """
-    PoseEstimator class for estimating poses in images using MediaPipe. 
+    High-level pose estimation interface.
     
-    This class defines the interface for loading a pose estimation model and predicting 
-    poses for single frames or batches of frames.
+    This class provides a clean interface for pose estimation, abstracting away
+    the backend implementation details. It uses MediaPipeBackend internally
+    and transforms the output to a simplified format.
     """
     
-    def __init__(self):
+    def __init__(self, model_complexity: int = 1, enable_segmentation: bool = False):
         """
         Initialize the PoseEstimator instance. 
         """
         self.backend = None
         self.backend_loaded = False
     
-    def load_model(self):
+    def load_model(self) -> None:
         """
         Load and initialize the MediaPipe model into the variable 'self.backend' for use by this PoseEstimator instance. 
         """
@@ -40,9 +41,8 @@ class PoseEstimator:
         'joints' maps to the joint name and its pixel coordinates as a tuple of (x, y). 'visibility' maps to the 
         joint name and its visibility score as a float [0.0-1.0]. 
         
-        Parameters:
-            frame: np.ndarray:
-                A NumPy array representing a single image of a person for pose estimation.
+        Args:
+            frame: A NumPy array representing a single image (BGR format from OpenCV)
         
         Returns:
             Pose:
@@ -65,16 +65,7 @@ class PoseEstimator:
             list[Pose]:
                 A list of dictionaries, each with 2 keys ('joints' and 'visibility') mapping to nested dictionaries.
         """
-<<<<<<< HEAD
         if not self.backend_loaded:
             self.load_model()
              
         return self.backend.predict_batch(batch)
-=======
-        predictions = []
-        
-        for frame in batch:
-            predictions.append(self.predict_frame(frame))
-        
-        return predictions
->>>>>>> a14bad2 (Fix import case for MediaPipe module)
