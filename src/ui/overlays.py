@@ -8,7 +8,7 @@ class Overlays:
     """
 
     def __init__(self):
-        self.joint_radius: int = 5
+        self.joint_radius: int = 1  
         self.joint_color: tuple[int, int, int] = (0, 255, 0)
         self.joint_thickness: int = -1
 
@@ -77,7 +77,17 @@ class Overlays:
             )
 
             if angles.get(key) is not None:
-                x = coord[0] + 10
+                # Position angle text: left joints on left, right joints on right
+                if key.startswith("LEFT_"):
+                    # Left side: position text to the left of the joint
+                    text_width = cv2.getTextSize(str(int(angles.get(key))), self.text_font, self.text_scale, self.text_thickness)[0][0]
+                    x = coord[0] - text_width - 10
+                elif key.startswith("RIGHT_"):
+                    # Right side: position text to the right of the joint
+                    x = coord[0] + 10
+                else:
+                    # Default: position to the right
+                    x = coord[0] + 10
                 y = coord[1]
                 self.draw_angle(frame, angles.get(key), (x, y))
 

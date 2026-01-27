@@ -1,6 +1,8 @@
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Optional
 import numpy as np
-import mediapipe as mp
+
+from src.features.backends.mediapipe_backend import MediaPipeBackend
+
 
 class PoseEstimator:
     """
@@ -16,7 +18,7 @@ class PoseEstimator:
 
         Stub implementation.
         """
-        self.model = None
+        self.backend = MediaPipeBackend(model_complexity=model_complexity, enable_segmentation=enable_segmentation)
         self.model_loaded = False
 
     def load_model(self):
@@ -26,6 +28,7 @@ class PoseEstimator:
 
         Stub implementation.
         """
+        self.backend.load()
         self.model_loaded = True
 
     def predict_frame(self, frame: np.ndarray) -> Dict[str, Tuple[float, float, float]]:
@@ -40,8 +43,9 @@ class PoseEstimator:
                 A NumPy array representing a single image of a person for pose estimation.
 
         Returns:
-            Dict[str, Tuple[float, float, float]]:
-                A dictionary with 4 keys, each with a tuple of 3 floats that represent the predicted pose.
+            Dictionary with 4 keys ('shoulder', 'hip', 'knee', 'ankle'), each with 
+            a tuple of 3 floats (x, y, z) that represent the predicted pose in normalized coordinates.
+            Returns empty dict if pose cannot be detected.
         """
 
         if not self.model_loaded:
