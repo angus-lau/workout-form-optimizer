@@ -3,7 +3,9 @@
 ## setup
 1. `git clone git@github.com:angus-lau/workout-form-optimizer.git`
 2. `cd workout-form-optimizer`
-3. `source workout/bin/activate/`
+3. Activate virtual environment:
+   - **Bash/Linux/Mac**: `source workout/bin/activate`
+   - **PowerShell/Windows**: `.\workout\Scripts\Activate.ps1`
 4. `pip install -r requirements.txt`
 
 ## naming

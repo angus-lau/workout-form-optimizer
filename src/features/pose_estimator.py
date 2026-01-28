@@ -1,6 +1,6 @@
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Optional
 import numpy as np
-from .backends.mediapipe_backend import MediaPipeBackend
+from src.features.backends.mediapipe_backend import MediaPipeBackend
 
 JointMap = Dict[str, Tuple[float, float]]    # Joint name to (x, y) coordinates
 VisibilityMap = Dict[str, float]             # Joint name to visibility score
@@ -8,17 +8,17 @@ Pose = Dict[str, JointMap | VisibilityMap]   # Dictionary: {'joints': JointMap, 
 
 class PoseEstimator:
     """
-    PoseEstimator class for estimating poses in images using MediaPipe. 
-    
-    This class defines the interface for loading a pose estimation model and predicting 
+    PoseEstimator class for estimating poses in images using MediaPipe.
+
+    This class defines the interface for loading a pose estimation model and predicting
     poses for single frames or batches of frames.
     """
-    
+
     def __init__(self):
         """
         Initialize the PoseEstimator instance. 
         """
-        self.backend = None
+        self.backend = MediaPipeBackend(model_complexity=model_complexity, enable_segmentation=enable_segmentation)
         self.backend_loaded = False
     
     def load_model(self):
@@ -28,7 +28,6 @@ class PoseEstimator:
         if self.backend_loaded:
             return
         
-        self.backend = MediaPipeBackend()
         self.backend.load()  
         self.backend_loaded = True
     
@@ -43,7 +42,7 @@ class PoseEstimator:
         Parameters:
             frame: np.ndarray:
                 A NumPy array representing a single image of a person for pose estimation.
-        
+
         Returns:
             Pose:
                 A dictionary with 2 keys ('joints' and 'visibility') mapping to nested dictionaries.
