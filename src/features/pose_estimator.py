@@ -1,8 +1,10 @@
 from typing import Tuple, Dict, List, Optional
 import numpy as np
-
 from src.features.backends.mediapipe_backend import MediaPipeBackend
 
+JointMap = Dict[str, Tuple[float, float]]    # Joint name to (x, y) coordinates
+VisibilityMap = Dict[str, float]             # Joint name to visibility score
+Pose = Dict[str, JointMap | VisibilityMap]   # Dictionary: {'joints': JointMap, 'visibility': VisibilityMap}
 
 class PoseEstimator:
     """
@@ -14,74 +16,55 @@ class PoseEstimator:
 
     def __init__(self):
         """
-        Initialize the PoseEstimator instance. The actual model loading is not implemented in this method.
-
-        Stub implementation.
+        Initialize the PoseEstimator instance. 
         """
         self.backend = MediaPipeBackend(model_complexity=model_complexity, enable_segmentation=enable_segmentation)
-        self.model_loaded = False
-
+        self.backend_loaded = False
+    
     def load_model(self):
         """
-        Load the PoseEstimator model. This method will intialize and configure MediaPipe Pose model, and store it in
-        the instanece variable 'self.model'.
-
-        Stub implementation.
+        Load and initialize the MediaPipe model into the variable 'self.backend' for use by this PoseEstimator instance. 
         """
-        self.backend.load()
-        self.model_loaded = True
-
-    def predict_frame(self, frame: np.ndarray) -> Dict[str, Tuple[float, float, float]]:
+        if self.backend_loaded:
+            return
+        
+        self.backend.load()  
+        self.backend_loaded = True
+    
+    def predict_frame(self, frame: np.ndarray) -> Pose:
         """
-        Predict the pose for a single numpy frame, or returns error if model is not loaded.
-
-        A pose is represented by a dictionary with 4 keys (shoulder, hip, knee, ankle),
-        each with their own corresponding (x, y, z) coordinates ranging from 0 to 1 (inclusive).
-
+        Predict the pose for a single numpy frame.
+        
+        A pose is represented by a dictionary with 2 keys ('joints' and 'visibility'). Each key mapping to another dictionary. 
+        'joints' maps to the joint name and its pixel coordinates as a tuple of (x, y). 'visibility' maps to the 
+        joint name and its visibility score as a float [0.0-1.0]. 
+        
         Parameters:
             frame: np.ndarray:
                 A NumPy array representing a single image of a person for pose estimation.
 
         Returns:
-            Dictionary with 4 keys ('shoulder', 'hip', 'knee', 'ankle'), each with 
-            a tuple of 3 floats (x, y, z) that represent the predicted pose in normalized coordinates.
-            Returns empty dict if pose cannot be detected.
+            Pose:
+                A dictionary with 2 keys ('joints' and 'visibility') mapping to nested dictionaries.
         """
-
-        if not self.model_loaded:
-            raise RuntimeError(
-                "PoseEstimator model not loaded. Call load_model() first."
-            )
-
-        pose = {
-            "shoulder": (0.5, 0.5, 0.5),
-            "hip": (0.5, 0.6, 0.5),
-            "knee": (0.5, 0.7, 0.5),
-            "ankle": (0.5, 0.8, 0.5),
-        }
-
-        return pose
-
-    def predict_batch(
-        self, batch: List[np.ndarray]
-    ) -> List[Dict[str, Tuple[float, float, float]]]:
+        if not self.backend_loaded:
+            self.load_model()
+            
+        return self.backend.predict_frame(frame)
+    
+    def predict_batch(self, batch: List[np.ndarray]) -> List[Pose]:
         """
-        Predict a pose for a batch of numpy frames.
-
-        Calls predict_frame repeatedly for each frame in the batch.
-
+        Given a batch of numpy frames, predict a pose for each frame in the batch by repeatedly calling predict_frame.
+        
         Parameters:
             batch: list[np.ndarray]:
-                A list of NumPy frames, each representing a single image of a person for pose estimation.
-
-        Returns:
-            list[Dict[str, Tuple[float, float, float]]]:
-                A list of dictionaries, each with 4 keys and a tuple of 3 floats that
-                represent the predicted pose.
+                A list of NumPy arrays, each representing a single image of a person for pose estimation.
+            
+        Returns: 
+            list[Pose]:
+                A list of dictionaries, each with 2 keys ('joints' and 'visibility') mapping to nested dictionaries.
         """
-        predictions = []
-
-        for frame in batch:
-            predictions.append(self.predict_frame(frame))
-        
-        return predictions
+        if not self.backend_loaded:
+            self.load_model()
+             
+        return self.backend.predict_batch(batch)

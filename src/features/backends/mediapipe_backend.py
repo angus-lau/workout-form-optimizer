@@ -102,6 +102,7 @@ class MediaPipeBackend:
         self._use_stub = False
         self._load_attempted = False
 
+
     def load(self) -> None:
         """Load MediaPipe Pose model."""
         model_dir = os.path.join(os.path.expanduser("~"), ".mediapipe_models")
