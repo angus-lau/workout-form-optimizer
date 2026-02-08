@@ -459,3 +459,159 @@ def test_hip_angle_functions():
     
     print(f"Section 5 Results: {tests_passed}/{tests_total} tests passed")
     assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
+
+def test_elbow_angle_function():
+    """Test elbow angle function with side parameter."""
+    
+    print("Test Batch 6: Elbow Angle Function (with side parameter)")
+
+    
+    tests_passed = 0
+    tests_total = 0
+    
+    # Test 1: Fully extended arm
+    joints_extended = {
+        "LEFT_SHOULDER": (0.3, 0.3),
+        "LEFT_ELBOW": (0.3, 0.5),
+        "LEFT_WRIST": (0.3, 0.7),
+    }
+    tests_total += 1
+    angle = compute_elbow_angle(joints_extended, side='LEFT')
+    passed = angle is not None and abs(angle - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 1 - Fully extended arm: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (extended), Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 2: Bent elbow (90 degrees)
+    joints_bent = {
+        "LEFT_SHOULDER": (0.3, 0.3),
+        "LEFT_ELBOW": (0.3, 0.5),
+        "LEFT_WRIST": (0.5, 0.5),  # Wrist to the right
+    }
+    tests_total += 1
+    angle = compute_elbow_angle(joints_bent, side='LEFT')
+    passed = angle is not None and abs(angle - 90) < 10
+    tests_passed += passed
+    print(f"\nTest 2 - Bent elbow (90°): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~90°, Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 3: RIGHT side
+    joints_right = {
+        "RIGHT_SHOULDER": (0.7, 0.3),
+        "RIGHT_ELBOW": (0.7, 0.5),
+        "RIGHT_WRIST": (0.7, 0.7),
+    }
+    tests_total += 1
+    angle = compute_elbow_angle(joints_right, side='RIGHT')
+    passed = angle is not None and abs(angle - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 3 - RIGHT side extended: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180°, Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 4: Missing joints
+    tests_total += 1
+    joints_incomplete = {"LEFT_SHOULDER": (0.3, 0.3)}
+    angle = compute_elbow_angle(joints_incomplete, side='LEFT')
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 4 - Missing joints: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    # Test 5: Invalid tuple type check
+    tests_total += 1
+    joints_invalid = {
+        "LEFT_SHOULDER": [0.3, 0.3],  # List instead of tuple
+        "LEFT_ELBOW": (0.3, 0.5),
+        "LEFT_WRIST": (0.3, 0.7),
+    }
+    angle = compute_elbow_angle(joints_invalid, side='LEFT')
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 5 - Invalid type (list): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    print(f"\n{'─' * 70}")
+    print(f"Section 6 Results: {tests_passed}/{tests_total} tests passed")
+    assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
+
+
+def test_real_world_scenarios():
+    """Test with realistic pose scenarios."""
+    
+    print("Test Batch 7: Real-World Pose Scenarios")
+    
+    tests_passed = 0
+    tests_total = 0
+    
+    # Scenario 1: Squat position
+    print("\nScenario 1: Squat Position")
+    squat_joints = {
+        "LEFT_SHOULDER": (0.4, 0.3),
+        "RIGHT_SHOULDER": (0.6, 0.3),
+        "LEFT_HIP": (0.2, 0.5),
+        "RIGHT_HIP": (0.6, 0.5),
+        "LEFT_KNEE": (0.5, 0.6),
+        "RIGHT_KNEE": (0.6, 0.6),
+        "LEFT_ANKLE": (0.4, 0.7),
+        "RIGHT_ANKLE": (0.6, 0.7),
+    }
+    
+    tests_total += 1
+    knee_angle = compute_knee_angle(squat_joints, side='LEFT')
+    passed = knee_angle is not None and 45 < knee_angle < 135
+    tests_passed += passed
+    print(f"  Knee angle: {'PASS' if passed else 'FAIL'}")
+    print(f"    Expected: 45° < angle < 135° (bent), Got: {knee_angle:.2f}°" if knee_angle else f"    Got: None")
+    
+    tests_total += 1
+    hip_angle = compute_hip_angle(squat_joints, side='LEFT')
+    passed = hip_angle is not None and hip_angle < 180
+    tests_passed += passed
+    print(f"  Hip angle: {'PASS' if passed else 'FAIL'}")
+    print(f"    Expected: <180° (bent), Got: {hip_angle:.2f}°" if hip_angle else f"    Got: None")
+    
+    # Scenario 2: Standing straight
+    print("\nScenario 2: Standing Straight")
+    standing_joints = {
+        "LEFT_SHOULDER": (0.4, 0.2),
+        "RIGHT_SHOULDER": (0.6, 0.2),
+        "LEFT_HIP": (0.4, 0.5),
+        "RIGHT_HIP": (0.6, 0.5),
+        "LEFT_KNEE": (0.4, 0.7),
+        "RIGHT_KNEE": (0.6, 0.7),
+        "LEFT_ANKLE": (0.4, 0.9),
+        "RIGHT_ANKLE": (0.6, 0.9),
+    }
+    
+    tests_total += 1
+    back_angle = compute_back_angle(standing_joints)
+    passed = back_angle is not None and abs(back_angle - 180) < 10
+    tests_passed += passed
+    print(f"  Back angle: {'PASS' if passed else 'FAIL'}")
+    print(f"    Expected: ~180° (straight), Got: {back_angle:.2f}°" if back_angle else f"    Got: None")
+    
+    tests_total += 1
+    knee_angle = compute_knee_angle(standing_joints, side='LEFT')
+    passed = knee_angle is not None and abs(knee_angle - 180) < 10
+    tests_passed += passed
+    print(f"  Knee angle: {'PASS' if passed else 'FAIL'}")
+    print(f"    Expected: ~180° (straight), Got: {knee_angle:.2f}°" if knee_angle else f"    Got: None")
+    
+    # Scenario 3: Bicep curl
+    print("\nScenario 3: Bicep Curl")
+    curl_joints = {
+        "LEFT_SHOULDER": (0.3, 0.3),
+        "LEFT_ELBOW": (0.3, 0.5),
+        "LEFT_WRIST": (0.45, 0.35),  # Curled up
+    }
+    
+    tests_total += 1
+    elbow_angle = compute_elbow_angle(curl_joints, side='LEFT')
+    passed = elbow_angle is not None and 30 < elbow_angle < 90
+    tests_passed += passed
+    print(f"  Elbow angle: {'PASS' if passed else 'FAIL'}")
+    print(f"    Expected: 30° < angle < 90° (curled), Got: {elbow_angle:.2f}°" if elbow_angle else f"    Got: None")
+    
+    print(f"\n{'─' * 70}")
+    print(f"Section 7 Results: {tests_passed}/{tests_total} tests passed")
+    assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
