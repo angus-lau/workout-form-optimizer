@@ -285,3 +285,103 @@ def test_compute_back_angle():
     
     print(f"Section 3 Results: {tests_passed}/{tests_total} tests passed")
     assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
+
+def test_knee_angle_functions():
+    """Test knee angle functions with side parameter."""
+    
+    print("Test Batch 4: Knee Angle Functions (with side parameter)")
+    
+    tests_passed = 0
+    tests_total = 0
+    
+    # Create test joints data
+    joints = {
+        "LEFT_HIP": (0.4, 0.4),
+        "LEFT_KNEE": (0.4, 0.6),
+        "LEFT_ANKLE": (0.4, 0.8),
+        "RIGHT_HIP": (0.6, 0.4),
+        "RIGHT_KNEE": (0.6, 0.6),
+        "RIGHT_ANKLE": (0.6, 0.8),
+    }
+    
+    # Test 1: compute_knee_angle with LEFT side
+    tests_total += 1
+    angle = compute_knee_angle(joints, side='LEFT')
+    passed = angle is not None and abs(angle - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 1 - compute_knee_angle(side='LEFT'): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (extended), Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 2: compute_knee_angle with RIGHT side
+    tests_total += 1
+    angle = compute_knee_angle(joints, side='RIGHT')
+    passed = angle is not None and abs(angle - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 2 - compute_knee_angle(side='RIGHT'): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (extended), Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 3: compute_knee_angle with lowercase side
+    tests_total += 1
+    angle = compute_knee_angle(joints, side='left')
+    passed = angle is not None and abs(angle - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 3 - compute_knee_angle(side='left' lowercase): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (handles lowercase), Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 4: compute_left_knee_angle
+    tests_total += 1
+    angle_left = compute_left_knee_angle(joints)
+    passed = angle_left is not None and abs(angle_left - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 4 - compute_left_knee_angle(): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (extended), Got: {angle_left:.2f}°" if angle_left else f"  Got: None")
+    
+    # Test 5: compute_right_knee_angle
+    tests_total += 1
+    angle_right = compute_right_knee_angle(joints)
+    passed = angle_right is not None and abs(angle_right - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 5 - compute_right_knee_angle(): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (extended), Got: {angle_right:.2f}°" if angle_right else f"  Got: None")
+    
+    # Test 6: Verify left/right functions call compute_knee_angle correctly
+    tests_total += 1
+    angle_generic_left = compute_knee_angle(joints, side='LEFT')
+    passed = abs(angle_left - angle_generic_left) < 0.1
+    tests_passed += passed
+    print(f"\nTest 6 - Left functions equivalence: {'PASS' if passed else 'FAIL'}")
+    print(f"  compute_left_knee_angle() == compute_knee_angle(side='LEFT')")
+    print(f"  {angle_left:.2f}° == {angle_generic_left:.2f}°")
+    
+    # Test 7: Bent knee
+    joints_bent = {
+        "LEFT_HIP": (0.4, 0.4),
+        "LEFT_KNEE": (0.4, 0.6),
+        "LEFT_ANKLE": (0.5, 0.7),  # Moved forward
+    }
+    tests_total += 1
+    angle = compute_knee_angle(joints_bent, side='LEFT')
+    passed = angle is not None and angle < 180 and angle > 90
+    tests_passed += passed
+    print(f"\nTest 7 - Bent knee: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: 90° < angle < 180°, Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 8: Missing joint data
+    tests_total += 1
+    joints_incomplete = {"LEFT_HIP": (0.4, 0.4)}
+    angle = compute_knee_angle(joints_incomplete, side='LEFT')
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 8 - Missing joints: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    # Test 9: None input
+    tests_total += 1
+    angle = compute_knee_angle(None, side='LEFT')
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 9 - None input: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    print(f"Section 4 Results: {tests_passed}/{tests_total} tests passed")
+    assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
