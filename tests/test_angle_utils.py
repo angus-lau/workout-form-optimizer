@@ -385,3 +385,77 @@ def test_knee_angle_functions():
     
     print(f"Section 4 Results: {tests_passed}/{tests_total} tests passed")
     assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
+
+def test_hip_angle_functions():
+    """Test hip angle functions with side parameter."""
+    
+    print("Test Batch 5: Hip Angle Functions (with side parameter)")
+    
+    tests_passed = 0
+    tests_total = 0
+    
+    # Create test joints data - standing straight
+    joints = {
+        "LEFT_SHOULDER": (0.4, 0.2),
+        "LEFT_HIP": (0.4, 0.5),
+        "LEFT_KNEE": (0.4, 0.7),
+        "RIGHT_SHOULDER": (0.6, 0.2),
+        "RIGHT_HIP": (0.6, 0.5),
+        "RIGHT_KNEE": (0.6, 0.7),
+    }
+    
+    # Test 1: compute_hip_angle with LEFT side
+    tests_total += 1
+    angle = compute_hip_angle(joints, side='LEFT')
+    passed = angle is not None and abs(angle - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 1 - compute_hip_angle(side='LEFT'): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (standing), Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 2: compute_hip_angle with RIGHT side
+    tests_total += 1
+    angle = compute_hip_angle(joints, side='RIGHT')
+    passed = angle is not None and abs(angle - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 2 - compute_hip_angle(side='RIGHT'): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (standing), Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 3: compute_left_hip_angle
+    tests_total += 1
+    angle_left = compute_left_hip_angle(joints)
+    passed = angle_left is not None and abs(angle_left - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 3 - compute_left_hip_angle(): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (standing), Got: {angle_left:.2f}°" if angle_left else f"  Got: None")
+    
+    # Test 4: compute_right_hip_angle
+    tests_total += 1
+    angle_right = compute_right_hip_angle(joints)
+    passed = angle_right is not None and abs(angle_right - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 4 - compute_right_hip_angle(): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (standing), Got: {angle_right:.2f}°" if angle_right else f"  Got: None")
+    
+    # Test 5: Bent hip (sitting position)
+    joints_sitting = {
+        "LEFT_SHOULDER": (0.4, 0.3),
+        "LEFT_HIP": (0.4, 0.5),
+        "LEFT_KNEE": (0.5, 0.5),  # Knee forward (sitting)
+    }
+    tests_total += 1
+    angle = compute_hip_angle(joints_sitting, side='LEFT')
+    passed = angle is not None and angle < 180 and angle > 45
+    tests_passed += passed
+    print(f"\nTest 5 - Bent hip (sitting): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: 45° < angle < 180°, Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 6: Functions equivalence
+    tests_total += 1
+    angle_generic_left = compute_hip_angle(joints, side='LEFT')
+    passed = abs(angle_left - angle_generic_left) < 0.1
+    tests_passed += passed
+    print(f"\nTest 6 - Left functions equivalence: {'PASS' if passed else 'FAIL'}")
+    print(f"  compute_left_hip_angle() == compute_hip_angle(side='LEFT')")
+    
+    print(f"Section 5 Results: {tests_passed}/{tests_total} tests passed")
+    assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
