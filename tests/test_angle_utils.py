@@ -123,3 +123,88 @@ def test_compute_angle_basic():
     print(f"\n{'─' * 70}")
     print(f"Section 1 Results: {tests_passed}/{tests_total} tests passed")
     assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
+
+def test_compute_angle_edge_cases():
+    """Test compute_angle with edge cases and error conditions."""
+    
+    print("Test Batch 2: Edge Cases and Error Handling")
+    
+    tests_passed = 0
+    tests_total = 0
+    
+    # Test 1: None inputs
+    tests_total += 1
+    angle = compute_angle(None, (0, 0, 0), (1, 0, 0))
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 1 - None as first point: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    tests_total += 1
+    angle = compute_angle((0, 1, 0), None, (1, 0, 0))
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 2 - None as vertex point: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    tests_total += 1
+    angle = compute_angle((0, 1, 0), (0, 0, 0), None)
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 3 - None as third point: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    # Test 4: Invalid types (list instead of tuple)
+    tests_total += 1
+    angle = compute_angle([0, 1], (0, 0, 0), (1, 0, 0))
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 4 - List instead of tuple: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    # Test 5: Too short tuple
+    tests_total += 1
+    angle = compute_angle((0,), (0, 0, 0), (1, 0, 0))
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 5 - Tuple too short: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    # Test 6: Zero-length vector (identical points a and b)
+    tests_total += 1
+    angle = compute_angle((0, 0, 0), (0, 0, 0), (1, 0, 0))
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 6 - Zero-length vector (a=b): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    # Test 7: Zero-length vector (identical points b and c)
+    tests_total += 1
+    angle = compute_angle((0, 1, 0), (0, 0, 0), (0, 0, 0))
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 7 - Zero-length vector (b=c): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    # Test 8: Collinear points (180 degrees)
+    tests_total += 1
+    angle = compute_angle((2, 0, 0), (1, 0, 0), (0, 0, 0))
+    passed = angle is not None and abs(angle - 180) < 1
+    tests_passed += passed
+    print(f"\nTest 8 - Collinear points (0°): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~0°, Got: {angle:.2f}°" if angle else f"  Got: {angle}")
+    
+    # Test 9: Non-numeric coordinates
+    tests_total += 1
+    try:
+        angle = compute_angle(("a", "b", 0), (0, 0, 0), (1, 0, 0))
+        passed = angle is None
+    except:
+        passed = False
+    tests_passed += passed
+    print(f"\nTest 9 - Non-numeric coordinates: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None (or exception handled), Got: {angle if 'angle' in locals() else 'Exception'}")
+    
+    print(f"\n{'─' * 70}")
+    print(f"Section 2 Results: {tests_passed}/{tests_total} tests passed")
+    assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
