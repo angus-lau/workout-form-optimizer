@@ -205,6 +205,83 @@ def test_compute_angle_edge_cases():
     print(f"\nTest 9 - Non-numeric coordinates: {'PASS' if passed else 'FAIL'}")
     print(f"  Expected: None (or exception handled), Got: {angle if 'angle' in locals() else 'Exception'}")
     
-    print(f"\n{'─' * 70}")
     print(f"Section 2 Results: {tests_passed}/{tests_total} tests passed")
+    assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
+
+def test_compute_back_angle():
+    """Test compute_back_angle function."""
+    
+
+    print("Test Batch 3: compute_back_angle Tests")
+
+    
+    tests_passed = 0
+    tests_total = 0
+    
+    # Test 1: Perfect vertical posture (180 degrees)
+    tests_total += 1
+    joints_straight = {
+        "LEFT_SHOULDER": (0.4, 0.3),
+        "RIGHT_SHOULDER": (0.6, 0.3),
+        "LEFT_HIP": (0.4, 0.6),
+        "RIGHT_HIP": (0.6, 0.6),
+        "LEFT_ANKLE": (0.4, 0.9),
+        "RIGHT_ANKLE": (0.6, 0.9),
+    }
+    angle = compute_back_angle(joints_straight)
+    passed = angle is not None and abs(angle - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 1 - Perfect vertical posture: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (straight), Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 2: Forward lean
+    tests_total += 1
+    joints_lean = {
+        "LEFT_SHOULDER": (0.3, 0.3),
+        "RIGHT_SHOULDER": (0.5, 0.3),
+        "LEFT_HIP": (0.4, 0.6),
+        "RIGHT_HIP": (0.6, 0.6),
+        "LEFT_ANKLE": (0.4, 0.9),
+        "RIGHT_ANKLE": (0.6, 0.9),
+    }
+    angle = compute_back_angle(joints_lean)
+    passed = angle is not None and angle < 180
+    tests_passed += passed
+    print(f"\nTest 2 - Forward lean posture: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: <180° (leaning), Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    # Test 3: Missing joints (should return None)
+    tests_total += 1
+    joints_incomplete = {
+        "LEFT_SHOULDER": (0.4, 0.3),
+        "RIGHT_SHOULDER": (0.6, 0.3),
+    }
+    angle = compute_back_angle(joints_incomplete)
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 3 - Missing joints: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    # Test 4: None input
+    tests_total += 1
+    angle = compute_back_angle(None)
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 4 - None input: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+    
+    # Test 5: Only left side joints (should still work)
+    tests_total += 1
+    joints_left_only = {
+        "LEFT_SHOULDER": (0.4, 0.3),
+        "LEFT_HIP": (0.4, 0.6),
+        "LEFT_ANKLE": (0.4, 0.9),
+    }
+    angle = compute_back_angle(joints_left_only)
+    passed = angle is not None and abs(angle - 180) < 5
+    tests_passed += passed
+    print(f"\nTest 5 - Left side only: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: ~180° (straight), Got: {angle:.2f}°" if angle else f"  Got: None")
+    
+    print(f"Section 3 Results: {tests_passed}/{tests_total} tests passed")
     assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
