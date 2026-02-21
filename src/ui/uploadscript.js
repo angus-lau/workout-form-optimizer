@@ -26,13 +26,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Adds eventListener for clicking on the drop zone. When clicked, it triggers the hidden file input click.
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // plays dragover animation when file is dragged over the drop zone. It prevents the default behavior (automatic
+    // file opening to allow dropping.
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    // Remove animation on drag leave
+    ['dragleave', 'dragend'].forEach(type => {
+        dropZone.addEventListener(type, () => dropZone.classList.remove('dragover'));
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+
+        const files = e.dataTransfer.files;
+
+        if (isValidUpload(files)) {
+            fileInput.files = files;
+            showFileInfo(files[0]);
+        }
+    });
+
+    // Handle Browse selection
+    fileInput.addEventListener('change', () => {
+        const files = fileInput.files;
+
+        if (isValidUpload(files)) {
+            fileInput.files = files;
+            showFileInfo(files[0]);
+        }
+    });
+
+    // TODO: Implement actual upload logic here.
+    form.addEventListener('submit', (e) => {
+        e.preventDefault(); 
+    });
+
 
     // Error handling helpers
     function showError(text) {
         errorMessage.textContent = text;
         errorMessage.style.display = 'block';
         uploadBtn.disabled = true;
-        fileInfo.style.display = 'none'; // Hide info if there is an error
+        fileInfo.style.display = 'none';
     }
 
     function clearError() {
@@ -41,7 +83,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Check if file is .mp4 and < 100 MB
-    function isValidFile(file) {
+    function isValidUpload(files) {
+        if (!files || files.length === 0) {
+            showError("Please upload a .mp4 video.");
+            return false;
+        }
+
+        if (files.length > 1) {
+            showError("Please drop only one video at a time");
+            return;
+        }
+
+        const file = files[0];
+
         if (!(file.type === 'video/mp4') || !file.name.toLowerCase().endsWith('.mp4')) {
             showError("Only .mp4 videos are allowed");
             return false;
@@ -53,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Update the UI with file info
-    function updateUI(file) {
+    function showFileInfo(file) {
         clearError();
         fileInfo.style.display = 'block';
         fileName.textContent = file.name;
@@ -75,77 +129,4 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar.style.width = '0%';
     }
 
-    
-    
-    // Adds eventListener for clicking on the drop zone. When clicked, it triggers the hidden file input click.
-    dropZone.addEventListener('click', () => fileInput.click());
-
-    // plays dragover animation when file is dragged over the drop zone. It prevents the default behavior (automatic
-    // file opening to allow dropping.
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
-    });
-
-    // Remove animation on drag leave
-    ['dragleave', 'dragend'].forEach(type => {
-        dropZone.addEventListener(type, () => dropZone.classList.remove('dragover'));
-    });
-
-    // Handle File Drop
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        
-        if (e.dataTransfer.files.length == 1) {
-            const file = e.dataTransfer.files[0];
-            if (isValidFile(file)) {
-                fileInput.files = e.dataTransfer.files; // Sync with hidden input
-                updateUI(file);
-            }
-        } else {
-            showError("Please drop only one file at a time");
-        }
-    });
-
-    // Handle "Browse" selection
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length == 1) {
-            const file = fileInput.files[0];
-            if (isValidFile(file)) {
-                updateUI(file);
-            } else {
-                showError("Only .mp4 videos are allowed");
-                fileInput.value = ''; // Clear the invalid input
-            }
-        } else {
-            showError("Please drop only one file at a time");
-        }
-    });
-
-    // --- 4. Simulate Submission ---
-    form.addEventListener('submit', (e) => {
-        e.preventDefault(); 
-        
-        // uploadBtn.disabled = true;
-        // statusText.textContent = `Uploading ${exerciseInput.value} video...`;
-        
-        // // Simulate progress bar
-        // let progress = 0;
-        // const interval = setInterval(() => {
-        //     progress += 5;
-        //     progressBar.style.width = progress + '%';
-            
-        //     if (progress >= 100) {
-        //         clearInterval(interval);
-        //         statusText.textContent = "Analysis Complete! ✅";
-        //         statusText.style.color = "green";
-        //         uploadBtn.disabled = false;
-                
-        //         alert(`SUCCESS!\n\nVideo: ${fileName.textContent}\nExercise: ${exerciseInput.value}`);
-        //     }
-        // }, 100);
-
-
-    });
 });
