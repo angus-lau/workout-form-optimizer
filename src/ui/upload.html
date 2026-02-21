@@ -109,8 +109,20 @@
             display: none;
             text-align: left;
             background: #f1f1f1;
-            padding: 10px;
-            border-radius: 6px;
+            padding: 15px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .file-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .file-details {
+            flex: 1;
         }
 
         .file-name {
@@ -125,14 +137,31 @@
             color: #777;
         }
 
+        .remove-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 10px;
+            transition: background 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: #c0392b;
+        }
+
         /* Progress Bar */
         .progress-container {
             width: 100%;
             background-color: #e0e0e0;
             border-radius: 4px;
-            margin-top: 10px;
             height: 6px;
             overflow: hidden;
+            margin-top: 10px;
         }
 
         .progress-bar {
@@ -209,14 +238,20 @@
             </div>
 
             <div class="file-info" id="fileInfo">
-                <div class="file-name" id="fileName">workout_video.mp4</div>
-                <div class="file-size" id="fileSize">15.4 MB</div>
+                <div class="file-header">
+                    <div class="file-details">
+                        <div class="file-name" id="fileName">workout_video.mp4</div>
+                        <div class="file-size" id="fileSize">15.4 MB</div>
+                    </div>
+                    <button type="button" class="remove-btn" id="removeBtn">Remove</button>
+                </div>
+                
                 <div class="progress-container">
                     <div class="progress-bar" id="progressBar"></div>
                 </div>
                 <div class="status-text" id="statusText">Ready to analyze</div>
             </div>
-
+            
             <div class="error-message" id="errorMessage"></div>
 
             <button type="submit" class="upload-btn" id="uploadBtn" disabled>Analyze Form</button>

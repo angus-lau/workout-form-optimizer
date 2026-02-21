@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBar = document.getElementById('progressBar');
     const statusText = document.getElementById('statusText');
     const form = document.getElementById('uploadForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const removeBtn = document.getElementById('removeBtn');
 
     const selectBtns = document.querySelectorAll('.select-btn');
     const exerciseInput = document.getElementById('exerciseTypeInput');
@@ -25,15 +27,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
+    // Error handling helpers
+    function showError(text) {
+        errorMessage.textContent = text;
+        errorMessage.style.display = 'block';
+        uploadBtn.disabled = true;
+        fileInfo.style.display = 'none'; // Hide info if there is an error
+    }
+
+    function clearError() {
+        errorMessage.textContent = "";
+        errorMessage.style.display = 'none';
+    }
+
     // Check if file is .mp4 and < 100 MB
     function isValidFile(file) {
         if (!(file.type === 'video/mp4') || !file.name.toLowerCase().endsWith('.mp4')) {
-            statusText.textContent = "Only .mp4 videos are allowed";
-            statusText.style.color = "#e24a4aff";
+            showError("Only .mp4 videos are allowed");
             return false;
         } else if (file.size > 100 * 1024 * 1024) { // 100 MB limit
-            statusText.textContent = "File size exceeds 100 MB";
-            statusText.style.color = "#e24a4aff";
+            showError("File size exceeds 100 MB");
             return false;
         }
         return true;
@@ -41,8 +54,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update the UI with file info
     function updateUI(file) {
+        clearError();
         fileInfo.style.display = 'block';
         fileName.textContent = file.name;
+
+        removeBtn.style.display = 'inline-block';
+        removeBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            uploadBtn.disabled = true;
+            removeBtn.style.display = 'none';
+        });
+
         // Convert bytes to MB
         fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB'; 
         
@@ -51,6 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText.style.color = "#4A90E2";
         progressBar.style.width = '0%';
     }
+
+    
     
     // Adds eventListener for clicking on the drop zone. When clicked, it triggers the hidden file input click.
     dropZone.addEventListener('click', () => fileInput.click());
@@ -72,27 +97,29 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         dropZone.classList.remove('dragover');
         
-        if (e.dataTransfer.files.length) {
+        if (e.dataTransfer.files.length == 1) {
             const file = e.dataTransfer.files[0];
             if (isValidFile(file)) {
                 fileInput.files = e.dataTransfer.files; // Sync with hidden input
                 updateUI(file);
             }
+        } else {
+            showError("Please drop only one file at a time");
         }
     });
 
     // Handle "Browse" selection
     fileInput.addEventListener('change', () => {
-        if (fileInput.files.length) {
+        if (fileInput.files.length == 1) {
             const file = fileInput.files[0];
-            
             if (isValidFile(file)) {
                 updateUI(file);
             } else {
-                statusText.textContent = "Only .mp4 videos are allowed";
-                statusText.style.color = "#e24a4aff";
+                showError("Only .mp4 videos are allowed");
                 fileInput.value = ''; // Clear the invalid input
             }
+        } else {
+            showError("Please drop only one file at a time");
         }
     });
 
