@@ -9,8 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBar = document.getElementById('progressBar');
     const statusText = document.getElementById('statusText');
     const form = document.getElementById('uploadForm');
-    
-    // --- Selection Elements ---
+
     const selectBtns = document.querySelectorAll('.select-btn');
     const exerciseInput = document.getElementById('exerciseTypeInput');
 
@@ -25,15 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- 2. Helper Functions ---
 
     // Check if file is .mp4 and < 100 MB
     function isValidFile(file) {
         if (!(file.type === 'video/mp4') || !file.name.toLowerCase().endsWith('.mp4')) {
-            alert("Error: Only .mp4 videos are allowed!");
+            statusText.textContent = "Only .mp4 videos are allowed";
+            statusText.style.color = "#e24a4aff";
             return false;
         } else if (file.size > 100 * 1024 * 1024) { // 100 MB limit
-            alert("Error: File size exceeds 100 MB!");
+            statusText.textContent = "File size exceeds 100 MB";
+            statusText.style.color = "#e24a4aff";
             return false;
         }
         return true;
@@ -51,8 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText.style.color = "#4A90E2";
         progressBar.style.width = '0%';
     }
-
-    // --- 3. File Handling Logic ---
     
     // Adds eventListener for clicking on the drop zone. When clicked, it triggers the hidden file input click.
     dropZone.addEventListener('click', () => fileInput.click());
@@ -91,7 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isValidFile(file)) {
                 updateUI(file);
             } else {
-                alert("Error: Only .mp4 videos are allowed!");
+                statusText.textContent = "Only .mp4 videos are allowed";
+                statusText.style.color = "#e24a4aff";
                 fileInput.value = ''; // Clear the invalid input
             }
         }
@@ -101,24 +100,24 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', (e) => {
         e.preventDefault(); 
         
-        uploadBtn.disabled = true;
-        statusText.textContent = `Uploading ${exerciseInput.value} video...`;
+        // uploadBtn.disabled = true;
+        // statusText.textContent = `Uploading ${exerciseInput.value} video...`;
         
-        // Simulate progress bar
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += 5;
-            progressBar.style.width = progress + '%';
+        // // Simulate progress bar
+        // let progress = 0;
+        // const interval = setInterval(() => {
+        //     progress += 5;
+        //     progressBar.style.width = progress + '%';
             
-            if (progress >= 100) {
-                clearInterval(interval);
-                statusText.textContent = "Analysis Complete! ✅";
-                statusText.style.color = "green";
-                uploadBtn.disabled = false;
+        //     if (progress >= 100) {
+        //         clearInterval(interval);
+        //         statusText.textContent = "Analysis Complete! ✅";
+        //         statusText.style.color = "green";
+        //         uploadBtn.disabled = false;
                 
-                alert(`SUCCESS!\n\nVideo: ${fileName.textContent}\nExercise: ${exerciseInput.value}`);
-            }
-        }, 100);
+        //         alert(`SUCCESS!\n\nVideo: ${fileName.textContent}\nExercise: ${exerciseInput.value}`);
+        //     }
+        // }, 100);
 
 
     });

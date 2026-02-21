@@ -148,6 +148,20 @@
             color: #4A90E2;
         }
 
+        /* Error Messaging */
+        .error-message {
+            margin-top: 1.5rem;
+            color: #e24a4a;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: none;
+            background-color: #ffeaea;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 4px solid #e24a4a;
+            text-align: left;
+        }
+
         /* Upload Button */
         .upload-btn {
             background-color: #27ae60;
@@ -157,7 +171,7 @@
             border-radius: 6px;
             font-size: 1rem;
             cursor: pointer;
-            margin-top: 1.5rem;
+            margin-top: 1rem;
             width: 100%;
             transition: background 0.3s;
             font-weight: bold;
@@ -202,6 +216,8 @@
                 </div>
                 <div class="status-text" id="statusText">Ready to analyze</div>
             </div>
+
+            <div class="error-message" id="errorMessage"></div>
 
             <button type="submit" class="upload-btn" id="uploadBtn" disabled>Analyze Form</button>
         </form>
