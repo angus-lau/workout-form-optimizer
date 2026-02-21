@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Form Optimizer</title>
+    <style>
+        /* General Page Styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Container for the upload card */
+        .upload-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .upload-card h2 {
+            margin-bottom: 1.5rem;
+            color: #333;
+            font-weight: 700;
+        }
+
+        /* Selection Bar Styling */
+        .selection-bar {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f0f0f0;
+            padding: 5px;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .select-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 10px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .select-btn:hover {
+            color: #333;
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        .select-btn.active {
+            background-color: #4A90E2;
+            color: white;
+            box-shadow: 0 2px 5px rgba(74, 144, 226, 0.3);
+        }
+
+        /* Drop Zone Area */
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background-color: #fafafa;
+        }
+
+        .drop-zone.dragover {
+            border-color: #4A90E2;
+            background-color: #eaf4ff;
+        }
+
+        .icon-container {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .browse-btn {
+            color: #4A90E2;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* File Info Display */
+        .file-info {
+            margin-top: 1.5rem;
+            display: none;
+            text-align: left;
+            background: #f1f1f1;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .file-name {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #333;
+            word-break: break-all;
+        }
+
+        .file-size {
+            font-size: 0.8rem;
+            color: #777;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 10px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #4A90E2;
+            transition: width 0.4s ease;
+        }
+
+        .status-text {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            color: #4A90E2;
+        }
+
+        /* Upload Button */
+        .upload-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            width: 100%;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+
+        .upload-btn:hover {
+            background-color: #219150;
+        }
+
+        .upload-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="upload-card">
+        <h2>Workout Form Optimizer</h2>
+        
+        <form id="uploadForm" action="/analyze-workout" method="POST" enctype="multipart/form-data">
+            
+            <div class="selection-bar">
+                <button type="button" class="select-btn active" data-value="bench_press">Bench Press</button>
+                <button type="button" class="select-btn" data-value="deadlift">Deadlift</button>
+                <button type="button" class="select-btn" data-value="squat">Squat</button>
+            </div>
+
+            <input type="hidden" name="exercise_type" id="exerciseTypeInput" value="bench_press">
+
+            <div class="drop-zone" id="dropZone">
+                <div class="icon-container">📹</div>
+                <p>Drag & Drop video here or <span class="browse-btn">Browse</span></p>
+                <input type="file" name="video_file" id="fileInput" accept="video/mp4">
+            </div>
+
+            <div class="file-info" id="fileInfo">
+                <div class="file-name" id="fileName">workout_video.mp4</div>
+                <div class="file-size" id="fileSize">15.4 MB</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="status-text" id="statusText">Ready to analyze</div>
+            </div>
+
+            <button type="submit" class="upload-btn" id="uploadBtn" disabled>Analyze Form</button>
+        </form>
+    </div>
+
+    <script src="uploadscript.js"></script>
+</body>
+</html>
