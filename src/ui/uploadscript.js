@@ -66,6 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // TODO: Implement actual upload logic here.
     form.addEventListener('submit', (e) => {
         e.preventDefault(); 
+
+        const file = fileInput.files[0];
+        console.log("File Name:", file.name);
+        console.log("Exercise Type:", exerciseInput.value);
+        console.log("File Size (MB):", (file.size / (1024 * 1024)).toFixed(2));
+        console.log("File Type:", file.type);
     });
 
 
@@ -119,8 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             uploadBtn.disabled = true;
             removeBtn.style.display = 'none';
         });
-
-        // Convert bytes to MB
+        
         fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB'; 
         
         uploadBtn.disabled = false;
