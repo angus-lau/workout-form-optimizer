@@ -7,7 +7,7 @@ sys.path.insert(0, str(project_root))
 
 import cv2 as cv
 import numpy as np
-from typing import Dict, Tuple, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.features.backends.mediapipe_backend import MediaPipeBackend
 from src.features.angle_utils import (
@@ -164,6 +164,106 @@ def _process_frame_with_angles(
                   font_scale, (0, 255, 0), thickness)
 
 
+def _compute_angles_dict(joints_normalized: Dict[str, Tuple[float, float]]) -> Dict[str, float]:
+    """Compute angle dict from normalized joints for API response."""
+    angles_dict: Dict[str, float] = {}
+    left_knee = compute_left_knee_angle(joints_normalized)
+    right_knee = compute_right_knee_angle(joints_normalized)
+    left_hip = compute_left_hip_angle(joints_normalized)
+    right_hip = compute_right_hip_angle(joints_normalized)
+    back = compute_back_angle(joints_normalized)
+    if left_knee is not None:
+        angles_dict["LEFT_KNEE"] = left_knee
+    if right_knee is not None:
+        angles_dict["RIGHT_KNEE"] = right_knee
+    if left_hip is not None:
+        angles_dict["LEFT_HIP"] = left_hip
+    if right_hip is not None:
+        angles_dict["RIGHT_HIP"] = right_hip
+    if back is not None:
+        angles_dict["BACK"] = back
+    return angles_dict
+
+
+def analyze_video(
+    video_path: str,
+    progress_callback: Optional[Callable[[int, int], None]] = None,
+) -> Dict[str, Any]:
+    """
+    Analyze a video file and return per-frame pose data for API use.
+
+    Args:
+        video_path: Path to the video file.
+        progress_callback: Optional callback(frame_index, total_frames) called after each frame.
+
+    Returns:
+        Dict with 'frames' (list of {frame_index, joints, angles}) and
+        'video_info' (width, height, fps, total_frames).
+    """
+    video_file = Path(video_path)
+    if not video_file.exists():
+        raise FileNotFoundError(f"Video file not found: {video_path}")
+
+    backend = MediaPipeBackend(model_complexity=1, enable_segmentation=False)
+    backend.load()
+
+    capture = cv.VideoCapture(str(video_file))
+    if not capture.isOpened():
+        raise ValueError(f"Could not open video file: {video_path}")
+
+    width = int(capture.get(cv.CAP_PROP_FRAME_WIDTH))
+    height = int(capture.get(cv.CAP_PROP_FRAME_HEIGHT))
+    fps = int(capture.get(cv.CAP_PROP_FPS)) or 24
+    total_frames = int(capture.get(cv.CAP_PROP_FRAME_COUNT))
+    if width <= 0 or height <= 0:
+        capture.release()
+        raise ValueError(f"Invalid video dimensions: {width}x{height}")
+
+    frames_data: List[Dict[str, Any]] = []
+    frame_index = 0
+
+    while True:
+        ret, frame = capture.read()
+        if not ret or frame is None:
+            break
+
+        result = backend.predict_frame(frame)
+        joints_dict = result.get("joints", {})
+        visibility_dict = result.get("visibility", {})
+
+        frame_data: Dict[str, Any] = {
+            "frame_index": frame_index,
+            "joints": {},
+            "angles": {},
+        }
+
+        if joints_dict:
+            _, joints_normalized = _convert_joints_to_pixels(
+                joints_dict, visibility_dict, width, height
+            )
+            # Convert to serializable format: {name: [x, y]} normalized 0-1
+            for name, coords in joints_normalized.items():
+                frame_data["joints"][name] = [round(coords[0], 4), round(coords[1], 4)]
+            frame_data["angles"] = _compute_angles_dict(joints_normalized)
+
+        frames_data.append(frame_data)
+        if progress_callback:
+            progress_callback(frame_index, total_frames if total_frames > 0 else frame_index + 1)
+        frame_index += 1
+
+    capture.release()
+
+    return {
+        "frames": frames_data,
+        "video_info": {
+            "width": width,
+            "height": height,
+            "fps": fps,
+            "total_frames": len(frames_data),
+        },
+    }
+
+
 def opencv() -> None:
     """
     Opens the first working webcam (cycles from 0-4) and displays its feed with pose detection.
@@ -182,6 +282,7 @@ def opencv() -> None:
     overlays = Overlays()
     
     # Try to find a working camera
+    print("Searching for webcam...")
     for i in range(5):
         capture = cv.VideoCapture(i)
         
@@ -196,7 +297,7 @@ def opencv() -> None:
             capture.release()
             continue
         
-        print(f"Camera {i} opened successfully. Press 'q' to quit.")
+        print(f"Camera {i} opened successfully. Press 'q' or ESC to quit.")
         print(f"Frame size: {test_frame.shape}")
         
         # Create window before entering loop
@@ -260,6 +361,9 @@ def opencv() -> None:
             cv.destroyAllWindows()
             cv.waitKey(1)
             break  # Exit after first working camera
+    else:
+        # No camera index 0-4 opened and read successfully
+        print("No webcam found. Tried camera indices 0–4. Check that a camera is connected and not in use by another app.")
 
 
 def process_video(video_path: str, exercise_type: Optional[str] = None, output_path: Optional[str] = None) -> None:
@@ -395,5 +499,3 @@ def process_video(video_path: str, exercise_type: Optional[str] = None, output_p
         cv.waitKey(1)
 
 
-if __name__ == "__main__":
-    opencv()
