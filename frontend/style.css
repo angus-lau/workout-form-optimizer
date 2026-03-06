@@ -1,0 +1,312 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 1.5rem;
+  background: #1a1a1a;
+  color: #e0e0e0;
+  line-height: 1.5;
+}
+
+header {
+  margin-bottom: 2rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  color: #888;
+  font-size: 0.95rem;
+}
+
+h2 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.source-section {
+  margin-bottom: 2rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.tab:hover {
+  background: #333;
+}
+
+.tab.active {
+  background: #3a7bd5;
+  border-color: #3a7bd5;
+  color: white;
+}
+
+.panel {
+  display: none;
+}
+
+.panel.active {
+  display: block;
+}
+
+.hint {
+  color: #888;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.hint code {
+  background: #333;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.video-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.folder-section {
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #252525;
+  overflow: hidden;
+}
+
+.folder-header {
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.folder-header:hover {
+  background: #2a2a2a;
+}
+
+.folder-header::after {
+  content: "▼";
+  font-size: 0.7rem;
+  color: #888;
+  transition: transform 0.2s;
+}
+
+.folder-section.collapsed .folder-header::after {
+  transform: rotate(-90deg);
+}
+
+.folder-content {
+  padding: 0 0.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.folder-section.collapsed .folder-content {
+  display: none;
+}
+
+.video-item {
+  padding: 0.5rem 1rem;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+
+.video-item:hover {
+  background: #333;
+}
+
+.video-item.selected {
+  border-color: #3a7bd5;
+  background: #2a3a4a;
+}
+
+.loading {
+  color: #888;
+}
+
+.upload-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  border: 2px dashed #444;
+  border-radius: 8px;
+  background: #2a2a2a;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+  border-color: #3a7bd5;
+  background: #2a3a4a;
+}
+
+.upload-text {
+  color: #888;
+}
+
+.player-section {
+  margin-top: 2rem;
+}
+
+.cancel-area {
+  margin-bottom: 1rem;
+}
+
+.cancel-area.hidden {
+  display: none;
+}
+
+.progress-area {
+  margin-bottom: 1rem;
+}
+
+.progress-area.hidden {
+  display: none;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #3a7bd5;
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.15s ease;
+}
+
+.progress-text {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+#cancel-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #555;
+  background: #333;
+  color: #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+#cancel-btn:hover {
+  background: #444;
+}
+
+.player-container {
+  background: #222;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #333;
+}
+
+.player-container.hidden {
+  display: none;
+}
+
+.placeholder {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: #666;
+  background: #222;
+  border-radius: 8px;
+  border: 1px dashed #333;
+}
+
+.placeholder.hidden {
+  display: none;
+}
+
+.video-wrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.video-wrapper video,
+.video-wrapper canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.video-wrapper canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.angle-display {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #1a1a1a;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  min-height: 2rem;
+}
+
+.status {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.status.error {
+  color: #e57373;
+}
+
+.status.processing {
+  color: #81c784;
+}
