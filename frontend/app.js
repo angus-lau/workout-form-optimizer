@@ -190,7 +190,7 @@ async function loadVideoList() {
     const res = await fetch(`${API_BASE}/api/videos`);
     const data = await res.json();
     if (!data.videos || data.videos.length === 0) {
-      listEl.innerHTML = '<span class="loading">No videos found in data/ or dataset/</span>';
+      listEl.innerHTML = '<span class="loading">No videos found in data/</span>';
       return;
     }
 
@@ -206,7 +206,7 @@ async function loadVideoList() {
     listEl.innerHTML = folders
       .map(
         (folder, i) => `
-        <div class="folder-section ${i > 0 ? "collapsed" : ""}" data-folder="${folder}">
+        <div class="folder-section collapsed" data-folder="${folder}">
           <div class="folder-header">${folderLabel(folder)}</div>
           <div class="folder-content">
             ${byFolder[folder]
@@ -220,12 +220,6 @@ async function loadVideoList() {
       `
       )
       .join("");
-
-    listEl.querySelectorAll(".folder-header").forEach((h) => {
-      h.addEventListener("click", () => {
-        h.closest(".folder-section").classList.toggle("collapsed");
-      });
-    });
 
     listEl.querySelectorAll(".video-item").forEach((el) => {
       el.addEventListener("click", (e) => {
@@ -419,9 +413,28 @@ function initUpload() {
   });
 }
 
+function initVideoListAccordion() {
+  const listEl = document.getElementById("video-list");
+  if (!listEl) return;
+  listEl.addEventListener("click", (e) => {
+    if (e.target.closest(".video-item")) return;
+    const header = e.target.closest(".folder-header");
+    if (!header) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const section = header.closest(".folder-section");
+    if (!section) return;
+    const wasCollapsed = section.classList.contains("collapsed");
+    const allSections = listEl.querySelectorAll(".folder-section");
+    for (const s of allSections) s.classList.add("collapsed");
+    if (wasCollapsed) section.classList.remove("collapsed");
+  });
+}
+
 function init() {
   initTabs();
   initUpload();
+  initVideoListAccordion();
   loadVideoList();
 
   document.getElementById("cancel-btn").addEventListener("click", () => {

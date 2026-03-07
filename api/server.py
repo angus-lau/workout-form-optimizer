@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 
 # Project root (api/ is inside project)
 PROJECT_ROOT = Path(__file__).parent.parent
-VIDEO_ROOTS = ["data", "dataset"]
+VIDEO_ROOTS = ["data"]
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".wmv"}
 
 
@@ -62,7 +62,7 @@ def _resolve_video_path(rel_path: str) -> Path:
 
 @app.get("/api/videos")
 def list_videos():
-    """List all videos in the data and dataset folders."""
+    """List all videos in the data folder."""
     return {"videos": _list_videos()}
 
 
@@ -88,7 +88,7 @@ async def process_video(
 
     Either:
     - Upload a file (multipart form with 'file' field), or
-    - Provide 'path' (query param) to an existing video in data/dataset.
+    - Provide 'path' (query param) to an existing video in data/.
     """
     from src.ui.opencv_demo import analyze_video
 
