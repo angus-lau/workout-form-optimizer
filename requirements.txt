@@ -9,7 +9,7 @@ jax==0.8.1
 jaxlib==0.8.1
 kiwisolver==1.4.9
 matplotlib==3.10.7
-mediapipe==0.10.14
+mediapipe==0.10.31
 ml_dtypes==0.5.4
 numpy==2.2.6
 opencv-contrib-python==4.12.0.88
@@ -26,6 +26,9 @@ scipy==1.16.3
 six==1.17.0
 sounddevice==0.5.3
 
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
 black==25.12.0
 flake8==7.3.0
-pytest==9.0.2

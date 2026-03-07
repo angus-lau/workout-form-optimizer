@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Form Optimizer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Workout Form Optimizer</h1>
+    <p class="subtitle">Video analysis with pose detection and angle overlay</p>
+  </header>
+
+  <main>
+    <section class="source-section">
+      <h2>Choose a video</h2>
+      <div class="tabs">
+        <button class="tab active" data-tab="existing">Existing videos</button>
+        <button class="tab" data-tab="upload">Upload your own</button>
+      </div>
+
+      <div id="existing-panel" class="panel active">
+        <p class="hint">Videos from the <code>data/</code> folder:</p>
+        <div id="video-list" class="video-list">
+          <span class="loading">Loading...</span>
+        </div>
+      </div>
+
+      <div id="upload-panel" class="panel">
+        <div class="upload-zone" id="upload-zone" role="button" tabindex="0">
+          <span class="upload-text">Drop a video here or click to browse</span>
+        </div>
+        <input type="file" id="file-input" accept="video/*" hidden>
+      </div>
+    </section>
+
+    <section class="player-section">
+      <h2>Analysis</h2>
+      <div id="cancel-area" class="cancel-area hidden">
+        <button id="cancel-btn" type="button">Cancel</button>
+      </div>
+      <div id="progress-area" class="progress-area hidden">
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <span id="progress-text" class="progress-text">Processing...</span>
+      </div>
+      <div id="player-container" class="player-container hidden">
+        <div class="video-wrapper">
+          <video id="video" controls crossorigin="anonymous"></video>
+          <canvas id="overlay"></canvas>
+        </div>
+        <div id="angle-display" class="angle-display"></div>
+        <p id="status" class="status"></p>
+      </div>
+      <div id="placeholder" class="placeholder">
+        <p>Select or upload a video to see pose analysis.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
