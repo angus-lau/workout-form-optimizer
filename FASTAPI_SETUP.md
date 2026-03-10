@@ -122,7 +122,8 @@ This interface allow you to:
       "message": "Knee angle too acute..."
     }
   ],
-  "status": "success"
+  "status": "success",
+  "quality": "good form"
 }
 ```
 

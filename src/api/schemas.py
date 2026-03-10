@@ -65,6 +65,10 @@ class FormAnalysisResponse(BaseModel):
     feedback: List[WorkoutFeedback] = Field(..., description="Form feedback items")
     status: str = Field(..., description="Analysis status")
     analysis_id: Optional[str] = Field(None, description="ID for retrieving this analysis later")
+    quality: Optional[str] = Field(
+        None,
+        description="Classifier assessment of form quality (e.g. good/bad)",
+    )
 
 
 class Exercise(BaseModel):
@@ -86,3 +90,52 @@ class AnalysisResult(BaseModel):
     feedback: List[WorkoutFeedback] = Field(..., description="Form feedback items")
     timestamp: str = Field(..., description="ISO format timestamp of analysis")
     status: str = Field(..., description="Analysis status")
+    quality: Optional[str] = Field(
+        None,
+        description="Classifier assessment of form quality (e.g. good/bad)",
+    )
+
+
+# ------------------ video schemas ------------------
+
+
+class VideoMetadata(BaseModel):
+    """Information about a video file available to the API."""
+
+    path: str = Field(..., description="Relative path to the video file")
+    name: str = Field(..., description="Filename")
+
+
+class VideoListResponse(BaseModel):
+    """Response returned by the `/api/videos` endpoint."""
+
+    videos: List[VideoMetadata]
+
+
+class FrameData(BaseModel):
+    """Analysis results for a single video frame."""
+
+    frame_index: int = Field(..., description="Zero‑based frame number")
+    joints: Dict[str, List[float]] = Field(..., description="Normalized joint coordinates")
+    angles: Dict[str, float] = Field(..., description="Computed joint angles")
+    quality: Optional[str] = Field(
+        None,
+        description="Classifier assessment of form quality for this frame",
+    )
+
+
+class VideoInfo(BaseModel):
+    """Metadata about the video stream itself."""
+
+    width: int
+    height: int
+    fps: int
+    total_frames: int
+
+
+class VideoAnalysisResult(BaseModel):
+    """Return value of a video processing request."""
+
+    frames: List[FrameData]
+    video_info: VideoInfo
+

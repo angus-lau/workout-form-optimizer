@@ -5,8 +5,8 @@ This module provides REST endpoints for pose estimation, form analysis,
 and workout feedback.
 """
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import cv2
 import numpy as np
@@ -14,6 +14,15 @@ from typing import List, Dict, Optional
 import io
 from datetime import datetime
 import uuid
+import asyncio
+import json
+import os
+import queue
+import tempfile
+import threading
+from pathlib import Path
+
+from src.api import config
 
 from src.api.schemas import (
     PoseData,
@@ -22,9 +31,21 @@ from src.api.schemas import (
     WorkoutFeedback,
     JointAngles,
     Exercise,
-    AnalysisResult
+    AnalysisResult,
+    VideoMetadata,
+    VideoListResponse,
+    VideoAnalysisResult
 )
 from src.ui.overlays import Overlays
+
+# feature utilities
+from src.features.pose_estimator import PoseEstimator
+from src.features.angle_utils import (
+    compute_knee_angle,
+    compute_hip_angle,
+    compute_back_angle,
+)
+from src.features.classifier import FormClassifier
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -32,6 +53,43 @@ app = FastAPI(
     description="API for analyzing and optimizing workout form using pose estimation",
     version="1.0.0",
 )
+
+# ---------------- video configuration ----------------
+
+# roots under which videos are allowed to live; relative to PROJECT_ROOT
+VIDEO_ROOTS = [config.DATA_DIR]
+VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".wmv"}
+
+
+def _list_videos() -> list[dict]:
+    """List all video files under VIDEO_ROOTS, returning relative paths."""
+    videos: list[dict] = []
+    seen = set()
+    for root in VIDEO_ROOTS:
+        if not root.exists():
+            continue
+        for path in root.rglob("*"):
+            if path.is_file() and path.suffix.lower() in VIDEO_EXTENSIONS:
+                rel = path.relative_to(config.PROJECT_ROOT)
+                rel_str = str(rel).replace("\\", "/")
+                if rel_str not in seen:
+                    seen.add(rel_str)
+                    videos.append({"path": rel_str, "name": path.name})
+    return sorted(videos, key=lambda v: v["path"])
+
+
+def _resolve_video_path(rel_path: str) -> Path:
+    """Resolve a relative path to an absolute path, ensuring it's under a video root."""
+    rel = Path(rel_path)
+    if rel.is_absolute() or ".." in rel.parts:
+        raise HTTPException(status_code=400, detail="Invalid path")
+    abs_path = (config.PROJECT_ROOT / rel).resolve()
+    if not abs_path.exists():
+        raise HTTPException(status_code=404, detail="Video not found")
+    if not str(abs_path).startswith(str(config.PROJECT_ROOT.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    return abs_path
+
 
 # Add CORS middleware
 app.add_middleware(
@@ -45,6 +103,7 @@ app.add_middleware(
 # Global instances
 pose_estimator = None
 overlays = None
+classifier: Optional[FormClassifier] = None
 
 # In-memory storage for analysis results (for now - can migrate to database later)
 analysis_storage: Dict[str, AnalysisResult] = {}
@@ -53,10 +112,12 @@ analysis_storage: Dict[str, AnalysisResult] = {}
 @app.on_event("startup")
 async def startup_event():
     """Initialize models on startup."""
-    global pose_estimator, overlays
+    global pose_estimator, overlays, classifier
     pose_estimator = PoseEstimator()
     pose_estimator.load_model()
     overlays = Overlays()
+    # instantiate rule‑based classifier (thresholds can be tuned elsewhere)
+    classifier = FormClassifier()
 
 
 @app.on_event("shutdown")
@@ -243,6 +304,156 @@ async def estimate_pose_batch(files: List[UploadFile] = File(...)) -> Dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ==================== Video Management Endpoints ====================
+
+@app.get("/api/videos", response_model=VideoListResponse)
+def list_videos() -> VideoListResponse:
+    """Return list of all known video files."""
+    return VideoListResponse(videos=[VideoMetadata(**v) for v in _list_videos()])
+
+
+@app.get("/api/videos/file/{path:path}")
+def serve_video(path: str):
+    """Send a video file by its relative path."""
+    try:
+        abs_path = _resolve_video_path(path)
+    except HTTPException:
+        raise
+    if not abs_path.is_file():
+        raise HTTPException(status_code=404, detail="Video not found")
+    return FileResponse(abs_path, media_type="video/mp4")
+
+
+@app.post("/api/process-video", response_model=VideoAnalysisResult)
+async def process_video_endpoint(
+    file: UploadFile = File(None),
+    path: str | None = Query(None, description="Path to existing video (e.g. data/squat/video.mp4)"),
+) -> VideoAnalysisResult:
+    """Process a video and return pose analysis for every frame.
+
+    Either upload a file or specify `path` to an existing dataset video.
+    """
+    from src.ui.opencv_demo import analyze_video
+
+    def run_analyze(video_path: str):
+        return analyze_video(video_path)
+
+    video_path = None
+
+    if file and file.filename:
+        suffix = Path(file.filename).suffix or ".mp4"
+        content = await file.read()
+        fd, temp_path = tempfile.mkstemp(suffix=suffix)
+        try:
+            os.write(fd, content)
+            os.close(fd)
+            video_path = temp_path
+            result = await asyncio.to_thread(run_analyze, video_path)
+            return VideoAnalysisResult(**result)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        finally:
+            if video_path and os.path.exists(video_path):
+                os.unlink(video_path)
+
+    if path:
+        abs_path = _resolve_video_path(path)
+        try:
+            result = await asyncio.to_thread(run_analyze, str(abs_path))
+            return VideoAnalysisResult(**result)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    raise HTTPException(
+        status_code=400,
+        detail="Provide either a file upload or a path to an existing video.",
+    )
+
+
+async def _stream_analyze(video_path: str, cleanup_path: str | None = None):
+    """Stream progress events then final result as SSE."""
+    from src.ui.opencv_demo import analyze_video
+
+    q = queue.Queue()
+
+    def progress_cb(frame: int, total: int):
+        q.put(("progress", frame, total))
+
+    def worker():
+        try:
+            result = analyze_video(video_path, progress_callback=progress_cb)
+            q.put(("done", result))
+        except Exception as e:
+            q.put(("error", str(e)))
+
+    thread = threading.Thread(target=worker)
+    thread.start()
+
+    try:
+        while True:
+            try:
+                item = q.get_nowait()
+            except queue.Empty:
+                await asyncio.sleep(0.05)
+                continue
+            if item[0] == "done":
+                yield f"data: {json.dumps({'type': 'done', 'result': item[1]})}\n\n"
+                break
+            if item[0] == "error":
+                yield f"data: {json.dumps({'type': 'error', 'detail': item[1]})}\n\n"
+                break
+            if item[0] == "progress":
+                yield f"data: {json.dumps({'type': 'progress', 'frame': item[1], 'total': item[2]})}\n\n"
+    finally:
+        thread.join()
+        if cleanup_path and os.path.exists(cleanup_path):
+            try:
+                os.unlink(cleanup_path)
+            except OSError:
+                pass
+
+
+@app.post("/api/process-video-stream")
+async def process_video_stream(
+    file: UploadFile = File(None),
+    path: str | None = Query(None, description="Path to existing video"),
+):
+    """
+    Process a video and stream progress via Server-Sent Events, then return the result.
+    """
+    video_path = None
+
+    if file and file.filename:
+        suffix = Path(file.filename).suffix or ".mp4"
+        content = await file.read()
+        fd, temp_path = tempfile.mkstemp(suffix=suffix)
+        try:
+            os.write(fd, content)
+            os.close(fd)
+            video_path = temp_path
+        except Exception:
+            if video_path and os.path.exists(video_path):
+                os.unlink(video_path)
+            raise
+
+    if path:
+        abs_path = _resolve_video_path(path)
+        video_path = str(abs_path)
+
+    if not video_path:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide either a file upload or a path to an existing video.",
+        )
+
+    cleanup = video_path if (file and file.filename) else None
+    return StreamingResponse(
+        _stream_analyze(video_path, cleanup_path=cleanup),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+    )
+
+
 # ==================== Form Analysis Endpoints ====================
 
 
@@ -271,12 +482,18 @@ async def analyze_form(request: FormAnalysisRequest) -> FormAnalysisResponse:
         # Calculate overall form score
         form_score = _calculate_form_score(joint_angles, feedback)
 
+        # Use classifier to annotate quality (if available)
+        quality_label = None
+        if classifier is not None and joint_angles.knee_angle is not None:
+            quality_label = classifier.predict(joint_angles.knee_angle)
+
         # Store result and get analysis ID
         analysis_id = _store_analysis_result(
             request.exercise_type,
             form_score,
             joint_angles,
-            feedback
+            feedback,
+            quality=quality_label,
         )
 
         response = FormAnalysisResponse(
@@ -285,7 +502,8 @@ async def analyze_form(request: FormAnalysisRequest) -> FormAnalysisResponse:
             joint_angles=joint_angles,
             feedback=feedback,
             status="success",
-            analysis_id=analysis_id
+            analysis_id=analysis_id,
+            quality=quality_label,
         )
         
         return response
@@ -336,11 +554,17 @@ async def analyze_form_video(
                 exercise_type=exercise_type, pose=pose, joint_angles=joint_angles
             )
 
+            # classifier quality per frame
+            frame_quality = None
+            if classifier is not None and joint_angles.knee_angle is not None:
+                frame_quality = classifier.predict(joint_angles.knee_angle)
+
             frame_analyses.append(
                 {
                     "frame": frame_count,
                     "joint_angles": joint_angles,
                     "feedback": feedback,
+                    "quality": frame_quality,
                 }
             )
 
@@ -412,7 +636,8 @@ def _store_analysis_result(
     exercise_type: str,
     form_score: float,
     joint_angles: JointAngles,
-    feedback: List[WorkoutFeedback]
+    feedback: List[WorkoutFeedback],
+    quality: Optional[str] = None,
 ) -> str:
     """
     Store analysis result and return its ID.
@@ -422,6 +647,7 @@ def _store_analysis_result(
         form_score: Overall form score
         joint_angles: Calculated joint angles
         feedback: Form feedback items
+        quality: Optional classifier label describing form quality
     
     Returns:
         Analysis ID for retrieval
@@ -434,7 +660,8 @@ def _store_analysis_result(
         joint_angles=joint_angles,
         feedback=feedback,
         timestamp=datetime.utcnow().isoformat(),
-        status="success"
+        status="success",
+        quality=quality,
     )
     analysis_storage[analysis_id] = analysis_result
     return analysis_id

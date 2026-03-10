@@ -15,7 +15,7 @@
 - Example: `python main.py data/squat/squat_000003.mp4`
 
 ## running the web frontend (video files only)
-1. Start the API server with virtual environment active: `python -m uvicorn api.server:app --reload --host localhost --port 8000`
+1. Start the API server with virtual environment active: `python -m uvicorn src.api.main:app --reload --host localhost --port 8000`
 2. Open the frontend: open `frontend/index.html` in your browser, or serve it with `python -m http.server 8080 --directory frontend` in a different terminal and visit `http://localhost:8080`
 3. Choose a video from the list (data/ folder) or upload your own. The video is processed once and not saved.
 

@@ -284,10 +284,6 @@ def opencv() -> None:
     # Try to find a working camera
     print("Searching for webcam...")
     for i in range(5):
-<<<<<<< HEAD
-=======
-        # cycles through the possible camera input options
->>>>>>> 71d2feb (fix code format)
         capture = cv.VideoCapture(i)
         
         if not capture.isOpened():
@@ -501,13 +497,6 @@ def process_video(video_path: str, exercise_type: Optional[str] = None, output_p
             print(f"Output video saved to: {output_path}")
         cv.destroyAllWindows()
         cv.waitKey(1)
-<<<<<<< HEAD
 
-
-<<<<<<< HEAD
 if __name__ == "__main__":
     opencv()
-=======
->>>>>>> 71d2feb (fix code format)
-=======
->>>>>>> 2c3bd09 (implemented simple frontend and apis, updated readme, updated requirements)

@@ -166,25 +166,16 @@ def compute_back_angle(
     forward lean or rounding.
 
     Args:
-<<<<<<< HEAD
         joints: Dictionary with MediaPipe joint names as keys and normalized (x, y) coordinates.
                 Expected keys: 'LEFT_SHOULDER', 'RIGHT_SHOULDER', 'LEFT_HIP', 'RIGHT_HIP',
                 'LEFT_ANKLE', 'RIGHT_ANKLE'
             
-=======
-        joints: Dictionary containing joint coordinates. Expected keys:
-            - 'shoulder': Shoulder joint coordinates (x, y, z)
-            - 'hip': Hip joint coordinates (x, y, z)
-            - 'ankle': Ankle joint coordinates (x, y, z)
-
->>>>>>> 71d2feb (fix code format)
     Returns:
         Back angle in degrees (0-180), or None if required joints are missing.
         180° = straight vertical alignment, smaller angles = forward lean.
     """
     if joints is None:
         return None
-<<<<<<< HEAD
     
     # Get left and right joints
     left_shoulder = joints.get("LEFT_SHOULDER")
@@ -225,31 +216,6 @@ def compute_back_angle(
     
     if shoulder is None or hip is None or ankle is None:
         return None
-    
-=======
-
-    required_keys = ["shoulder", "hip", "ankle"]
-    if not all(key in joints for key in required_keys):
-        return None
-
-    shoulder = joints["shoulder"]
-    hip = joints["hip"]
-    ankle = joints["ankle"]
-
-    if shoulder is None or hip is None or ankle is None:
-        return None
-
-    if (
-        not isinstance(shoulder, tuple)
-        or not isinstance(hip, tuple)
-        or not isinstance(ankle, tuple)
-    ):
-        return None
-
-    if len(shoulder) < 2 or len(hip) < 2 or len(ankle) < 2:
-        return None
-
->>>>>>> 71d2feb (fix code format)
     return compute_angle(shoulder, hip, ankle)
 
 

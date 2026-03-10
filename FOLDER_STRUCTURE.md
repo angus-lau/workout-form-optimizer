@@ -22,7 +22,12 @@ Core library code.
 #### `src/features/`
 - `backend\mediapipe_backend.py` - provides a thin wrapper so PoseEstimator can swap backends without changing callers
 - `angle_utils.py` - angle calculation utilities for joint angle measurements from pose landmarks
--`pose_estimator.py` - defines the PoseEstimator class for estimating poses in images using MediaPipe. 
+- `pose_estimator.py` - defines the PoseEstimator class for estimating poses in images using MediaPipe. 
+
+#### `src/api/`
+- `main.py` - FastAPI application entry point defining endpoints for pose estimation, form analysis, video processing, and exercise metadata
+- `schemas.py` - Pydantic models used for request/response validation
+- `config.py` - configuration constants and settings for the API
 
 #### `src/ui/`
 - `overlays.py` - defines a Class for drawing pose overlays on video frame
