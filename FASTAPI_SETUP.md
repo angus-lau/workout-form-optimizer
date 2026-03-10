@@ -40,7 +40,7 @@ The server will start at `http://localhost:8000`
 
 **GET** `/health`
 - Check API health and model status
-- Returns: `{"status": "healthy", "model_loaded": boolean}`
+- Returns: `{"status": "healthy"}`
 
 ### Pose Estimation
 

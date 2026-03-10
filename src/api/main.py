@@ -41,9 +41,11 @@ from src.ui.overlays import Overlays
 # feature utilities
 from src.features.pose_estimator import PoseEstimator
 from src.features.angle_utils import (
-    compute_knee_angle,
-    compute_hip_angle,
     compute_back_angle,
+    compute_right_knee_angle,
+    compute_left_knee_angle,
+    compute_right_hip_angle,
+    compute_left_hip_angle
 )
 from src.features.classifier import FormClassifier
 
@@ -119,15 +121,6 @@ async def startup_event():
     # instantiate rule‑based classifier (thresholds can be tuned elsewhere)
     classifier = FormClassifier()
 
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown."""
-    global pose_estimator
-    if pose_estimator:
-        pose_estimator.unload_model()
-
-
 # ==================== Health Check ====================
 
 
@@ -136,7 +129,6 @@ async def health_check():
     """Check API health and model status."""
     return {
         "status": "healthy",
-        "model_loaded": pose_estimator.model_loaded if pose_estimator else False,
     }
 
 
