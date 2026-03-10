@@ -206,7 +206,7 @@ async def get_exercise(exercise_id: str) -> Exercise:
 # ==================== Analysis Endpoints ====================
 
 
-@app.get("/api/analysis/{analysis_id}", response_model=AnalysisResult)
+@app.get("/api/analyze/{analysis_id}", response_model=AnalysisResult)
 async def get_analysis(analysis_id: str) -> AnalysisResult:
     """
     Fetch the results of a past analysis.
@@ -226,7 +226,7 @@ async def get_analysis(analysis_id: str) -> AnalysisResult:
 # ==================== Pose Estimation Endpoints ====================
 
 
-@app.post("/api/pose/estimate")
+@app.post("/api/analyze/pose/estimate")
 async def estimate_pose(file: UploadFile = File(...)) -> Dict:
     """
     Estimate pose from a single image.
@@ -255,7 +255,7 @@ async def estimate_pose(file: UploadFile = File(...)) -> Dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/pose/batch")
+@app.post("/api/analyze/pose/batch")
 async def estimate_pose_batch(files: List[UploadFile] = File(...)) -> Dict:
     """
     Estimate poses from multiple images.
@@ -290,6 +290,143 @@ async def estimate_pose_batch(files: List[UploadFile] = File(...)) -> Dict:
             "poses": poses,
             "errors": errors,
             "status": "success" if not errors else "partial",
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== Form Analysis Endpoints ====================
+
+
+@app.post("/api/analyze/form", response_model=FormAnalysisResponse)
+async def analyze_form(request: FormAnalysisRequest) -> FormAnalysisResponse:
+    """
+    Analyze workout form based on pose data.
+
+    Args:
+        request: Form analysis request with pose data and exercise type
+
+    Returns:
+        Detailed form analysis with feedback
+    """
+    try:
+        # Extract joint angles
+        joint_angles = _calculate_joint_angles(request.pose)
+
+        # Generate feedback based on exercise type
+        feedback = _generate_feedback(
+            exercise_type=request.exercise_type,
+            pose=request.pose,
+            joint_angles=joint_angles,
+        )
+
+        # Calculate overall form score
+        form_score = _calculate_form_score(joint_angles, feedback)
+
+        # Use classifier to annotate quality (if available)
+        quality_label = None
+        if classifier is not None and joint_angles.knee_angle is not None:
+            quality_label = classifier.predict(joint_angles.knee_angle)
+
+        # Store result and get analysis ID
+        analysis_id = _store_analysis_result(
+            request.exercise_type,
+            form_score,
+            joint_angles,
+            feedback,
+            quality=quality_label,
+        )
+
+        response = FormAnalysisResponse(
+            exercise_type=request.exercise_type,
+            form_score=form_score,
+            joint_angles=joint_angles,
+            feedback=feedback,
+            status="success",
+            analysis_id=analysis_id,
+            quality=quality_label,
+        )
+        
+        return response
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/analyze/form/video")
+async def analyze_form_video(
+    exercise_type: str, file: UploadFile = File(...)
+) -> Dict:
+    """
+    Analyze form throughout a video.
+
+    Args:
+        exercise_type: Type of exercise (squat, deadlift, benchpress)
+        file: Video file
+
+    Returns:
+        Frame-by-frame analysis with aggregated metrics
+    """
+    try:
+        # Read video file
+        contents = await file.read()
+        video_bytes = io.BytesIO(contents)
+
+        # Create temporary file for video processing
+        with open("/tmp/temp_video.mp4", "wb") as temp_file:
+            temp_file.write(contents)
+
+        # Process video
+        cap = cv2.VideoCapture("/tmp/temp_video.mp4")
+        frame_analyses = []
+        frame_count = 0
+
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Estimate pose
+            pose = pose_estimator.predict_frame(frame)
+
+            # Analyze form
+            joint_angles = _calculate_joint_angles(pose)
+            feedback = _generate_feedback(
+                exercise_type=exercise_type, pose=pose, joint_angles=joint_angles
+            )
+
+            # classifier quality per frame
+            frame_quality = None
+            if classifier is not None and joint_angles.knee_angle is not None:
+                frame_quality = classifier.predict(joint_angles.knee_angle)
+
+            frame_analyses.append(
+                {
+                    "frame": frame_count,
+                    "joint_angles": joint_angles,
+                    "feedback": feedback,
+                    "quality": frame_quality,
+                }
+            )
+
+            frame_count += 1
+
+        cap.release()
+
+        # Calculate aggregate metrics
+        avg_form_score = (
+            np.mean([_calculate_form_score(fa["joint_angles"], fa["feedback"]) 
+                    for fa in frame_analyses])
+            if frame_analyses
+            else 0
+        )
+
+        return {
+            "exercise_type": exercise_type,
+            "total_frames": frame_count,
+            "average_form_score": avg_form_score,
+            "frame_analyses": frame_analyses,
+            "status": "success",
         }
 
     except Exception as e:
@@ -444,144 +581,6 @@ async def process_video_stream(
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
     )
-
-
-# ==================== Form Analysis Endpoints ====================
-
-
-@app.post("/api/form/analyze", response_model=FormAnalysisResponse)
-async def analyze_form(request: FormAnalysisRequest) -> FormAnalysisResponse:
-    """
-    Analyze workout form based on pose data.
-
-    Args:
-        request: Form analysis request with pose data and exercise type
-
-    Returns:
-        Detailed form analysis with feedback
-    """
-    try:
-        # Extract joint angles
-        joint_angles = _calculate_joint_angles(request.pose)
-
-        # Generate feedback based on exercise type
-        feedback = _generate_feedback(
-            exercise_type=request.exercise_type,
-            pose=request.pose,
-            joint_angles=joint_angles,
-        )
-
-        # Calculate overall form score
-        form_score = _calculate_form_score(joint_angles, feedback)
-
-        # Use classifier to annotate quality (if available)
-        quality_label = None
-        if classifier is not None and joint_angles.knee_angle is not None:
-            quality_label = classifier.predict(joint_angles.knee_angle)
-
-        # Store result and get analysis ID
-        analysis_id = _store_analysis_result(
-            request.exercise_type,
-            form_score,
-            joint_angles,
-            feedback,
-            quality=quality_label,
-        )
-
-        response = FormAnalysisResponse(
-            exercise_type=request.exercise_type,
-            form_score=form_score,
-            joint_angles=joint_angles,
-            feedback=feedback,
-            status="success",
-            analysis_id=analysis_id,
-            quality=quality_label,
-        )
-        
-        return response
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/form/video")
-async def analyze_form_video(
-    exercise_type: str, file: UploadFile = File(...)
-) -> Dict:
-    """
-    Analyze form throughout a video.
-
-    Args:
-        exercise_type: Type of exercise (squat, deadlift, benchpress)
-        file: Video file
-
-    Returns:
-        Frame-by-frame analysis with aggregated metrics
-    """
-    try:
-        # Read video file
-        contents = await file.read()
-        video_bytes = io.BytesIO(contents)
-
-        # Create temporary file for video processing
-        with open("/tmp/temp_video.mp4", "wb") as temp_file:
-            temp_file.write(contents)
-
-        # Process video
-        cap = cv2.VideoCapture("/tmp/temp_video.mp4")
-        frame_analyses = []
-        frame_count = 0
-
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-
-            # Estimate pose
-            pose = pose_estimator.predict_frame(frame)
-
-            # Analyze form
-            joint_angles = _calculate_joint_angles(pose)
-            feedback = _generate_feedback(
-                exercise_type=exercise_type, pose=pose, joint_angles=joint_angles
-            )
-
-            # classifier quality per frame
-            frame_quality = None
-            if classifier is not None and joint_angles.knee_angle is not None:
-                frame_quality = classifier.predict(joint_angles.knee_angle)
-
-            frame_analyses.append(
-                {
-                    "frame": frame_count,
-                    "joint_angles": joint_angles,
-                    "feedback": feedback,
-                    "quality": frame_quality,
-                }
-            )
-
-            frame_count += 1
-
-        cap.release()
-
-        # Calculate aggregate metrics
-        avg_form_score = (
-            np.mean([_calculate_form_score(fa["joint_angles"], fa["feedback"]) 
-                    for fa in frame_analyses])
-            if frame_analyses
-            else 0
-        )
-
-        return {
-            "exercise_type": exercise_type,
-            "total_frames": frame_count,
-            "average_form_score": avg_form_score,
-            "frame_analyses": frame_analyses,
-            "status": "success",
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ==================== Exercise-Specific Endpoints ====================
