@@ -662,8 +662,10 @@ def _store_analysis_result(
 def _calculate_joint_angles(pose: Dict) -> JointAngles:
     """Calculate all relevant joint angles from pose data."""
     return JointAngles(
-        knee_angle=compute_knee_angle(pose),
-        hip_angle=compute_hip_angle(pose),
+        left_knee_angle=compute_left_knee_angle(pose),
+        right_knee_angle=compute_right_knee_angle(pose),
+        left_hip_angle=compute_left_hip_angle(pose),
+        right_hip_angle=compute_right_hip_angle(pose),
         back_angle=compute_back_angle(pose),
     )
 
@@ -688,21 +690,39 @@ def _analyze_squat(joint_angles: JointAngles) -> List[WorkoutFeedback]:
     """Squat-specific form analysis."""
     feedback = []
 
-    if joint_angles.knee_angle and joint_angles.knee_angle < 60:
+    if joint_angles.left_knee_angle and joint_angles.left_knee_angle < 60:
         feedback.append(
             WorkoutFeedback(
                 area="knees",
                 severity="warning",
-                message="Knee angle too acute. Ensure knees track over toes.",
+                message="Left knee angle too acute. Ensure knees track over toes.",
             )
         )
 
-    if joint_angles.hip_angle and joint_angles.hip_angle < 70:
+    if joint_angles.right_knee_angle and joint_angles.right_knee_angle < 60:
+        feedback.append(
+            WorkoutFeedback(
+                area="knees",
+                severity="warning",
+                message="Right knee angle too acute. Ensure knees track over toes.",
+            )
+        )
+
+    if joint_angles.left_hip_angle and joint_angles.left_hip_angle < 70:
         feedback.append(
             WorkoutFeedback(
                 area="hips",
                 severity="error",
-                message="Hips dropping too low. Maintain a neutral spine.",
+                message="Left hip dropping too low. Maintain a neutral spine.",
+            )
+        )
+    
+    if joint_angles.right_hip_angle and joint_angles.right_hip_angle < 70:
+        feedback.append(
+            WorkoutFeedback(
+                area="hips",
+                severity="error",
+                message="Right hip dropping too low. Maintain a neutral spine.",
             )
         )
 
@@ -713,21 +733,39 @@ def _analyze_deadlift(joint_angles: JointAngles) -> List[WorkoutFeedback]:
     """Deadlift-specific form analysis."""
     feedback = []
 
-    if joint_angles.knee_angle and joint_angles.knee_angle > 150:
+    if joint_angles.left_knee_angle and joint_angles.left_knee_angle > 150:
         feedback.append(
             WorkoutFeedback(
                 area="knees",
                 severity="warning",
-                message="Knees too extended. Keep slight knee bend.",
+                message="Left knees too extended. Keep slight knee bend.",
+            )
+        )
+    
+    if joint_angles.right_knee_angle and joint_angles.right_knee_angle > 150:
+        feedback.append(
+            WorkoutFeedback(
+                area="knees",
+                severity="warning",
+                message="Right knees too extended. Keep slight knee bend.",
             )
         )
 
-    if joint_angles.hip_angle and joint_angles.hip_angle > 120:
+    if joint_angles.left_hip_angle and joint_angles.left_hip_angle > 120:
         feedback.append(
             WorkoutFeedback(
                 area="hips",
                 severity="error",
-                message="Hips too high. Lower hips to proper starting position.",
+                message="Left hips too high. Lower hips to proper starting position.",
+            )
+        )
+    
+    if joint_angles.right_hip_angle and joint_angles.right_hip_angle > 120:
+        feedback.append(
+            WorkoutFeedback(
+                area="hips",
+                severity="error",
+                message="Right hips too high. Lower hips to proper starting position.",
             )
         )
 
@@ -747,12 +785,21 @@ def _analyze_benchpress(joint_angles: JointAngles) -> List[WorkoutFeedback]:
             )
         )
 
-    if joint_angles.hip_angle and joint_angles.hip_angle > 110:
+    if joint_angles.left_hip_angle and joint_angles.left_hip_angle > 110:
         feedback.append(
             WorkoutFeedback(
                 area="hips",
                 severity="warning",
-                message="Hip position unstable. Plant feet firmly.",
+                message="Left hip position unstable. Plant feet firmly.",
+            )
+        )
+    
+    if joint_angles.right_hip_angle and joint_angles.right_hip_angle > 110:
+        feedback.append(
+            WorkoutFeedback(
+                area="hips",
+                severity="warning",
+                message="Right hip position unstable. Plant feet firmly.",
             )
         )
 

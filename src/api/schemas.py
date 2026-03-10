@@ -32,8 +32,10 @@ class PoseData(BaseModel):
 class JointAngles(BaseModel):
     """Joint angle measurements in degrees."""
 
-    knee_angle: Optional[float] = Field(None, description="Knee flexion angle")
-    hip_angle: Optional[float] = Field(None, description="Hip flexion angle")
+    left_knee_angle: Optional[float] = Field(None, description="Left knee flexion angle")
+    right_knee_angle: Optional[float] = Field(None, description="Right knee flexion angle")
+    left_hip_angle: Optional[float] = Field(None, description="Left hip flexion angle")
+    right_hip_angle: Optional[float] = Field(None, description="Right hip flexion angle")
     back_angle: Optional[float] = Field(None, description="Back/spinal alignment angle")
 
 
