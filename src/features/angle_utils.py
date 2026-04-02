@@ -286,3 +286,35 @@ def compute_elbow_angle(joints: Dict[str, Tuple[float, float]],
     wrist_3d = (wrist[0], wrist[1], 0.0)
     
     return compute_angle(shoulder_3d, elbow_3d, wrist_3d)
+
+
+def compute_left_elbow_angle(joints: Dict[str, Tuple[float, float]]) -> Optional[float]:
+    """Compute left elbow flexion angle from MediaPipe joint coordinates.
+    
+    Calculates the angle at the left elbow joint formed by left_shoulder-left_elbow-left_wrist.
+    
+    Args:
+        joints: Dictionary with MediaPipe joint names as keys and normalized (x, y) coordinates.
+                Expected keys: 'LEFT_SHOULDER', 'LEFT_ELBOW', 'LEFT_WRIST'
+            
+    Returns:
+        Left elbow flexion angle in degrees (0-180), or None if required joints are missing.
+        180° = fully extended, smaller values = more flexion.
+    """
+    return compute_elbow_angle(joints, side='LEFT')
+
+
+def compute_right_elbow_angle(joints: Dict[str, Tuple[float, float]]) -> Optional[float]:
+    """Compute right elbow flexion angle from MediaPipe joint coordinates.
+    
+    Calculates the angle at the right elbow joint formed by right_shoulder-right_elbow-right_wrist.
+    
+    Args:
+        joints: Dictionary with MediaPipe joint names as keys and normalized (x, y) coordinates.
+                Expected keys: 'RIGHT_SHOULDER', 'RIGHT_ELBOW', 'RIGHT_WRIST'
+            
+    Returns:
+        Right elbow flexion angle in degrees (0-180), or None if required joints are missing.
+        180° = fully extended, smaller values = more flexion.
+    """
+    return compute_elbow_angle(joints, side='RIGHT')
