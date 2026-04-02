@@ -27,7 +27,7 @@ def parse_arguments() -> argparse.Namespace:
         "-e", "--exercise",
         type=str,
         default="squat",
-        help="Type of exercise to analyze (default: squat). Currently informational only.",
+        help="Type of exercise to analyze (default: squat).",
     )
     parser.add_argument(
         "-o", "--output",
