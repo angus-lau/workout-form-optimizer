@@ -28,6 +28,8 @@ from src.features.angle_utils import (
     compute_left_hip_angle,
     compute_right_hip_angle,
     compute_elbow_angle,
+    compute_left_elbow_angle,
+    compute_right_elbow_angle,
 )
 
 def test_compute_angle_basic():
@@ -611,7 +613,78 @@ def test_real_world_scenarios():
     tests_passed += passed
     print(f"  Elbow angle: {'PASS' if passed else 'FAIL'}")
     print(f"    Expected: 30° < angle < 90° (curled), Got: {elbow_angle:.2f}°" if elbow_angle else f"    Got: None")
-    
     print(f"\n{'─' * 70}")
     print(f"Section 7 Results: {tests_passed}/{tests_total} tests passed")
+    assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
+
+def test_left_right_elbow_wrapper_functions():
+    """Test compute_left_elbow_angle and compute_right_elbow_angle wrapper functions."""
+
+    print("Test Batch 8: Left/Right Elbow Wrapper Functions")
+
+    tests_passed = 0
+    tests_total = 0
+
+    joints = {
+        "LEFT_SHOULDER":  (0.0, 0.0),
+        "LEFT_ELBOW":     (1.0, 0.0),
+        "LEFT_WRIST":     (1.0, 1.0),
+        "RIGHT_SHOULDER": (0.0, 0.0),
+        "RIGHT_ELBOW":    (1.0, 0.0),
+        "RIGHT_WRIST":    (1.0, 1.0),
+    }
+
+    # Test 1: compute_left_elbow_angle returns 90 degrees
+    tests_total += 1
+    angle = compute_left_elbow_angle(joints)
+    passed = angle is not None and abs(angle - 90.0) < 0.001
+    tests_passed += passed
+    print(f"\nTest 1 - compute_left_elbow_angle (90°): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: 90.0°, Got: {angle:.3f}°" if angle is not None else f"  Got: None")
+
+    # Test 2: compute_right_elbow_angle returns 90 degrees
+    tests_total += 1
+    angle = compute_right_elbow_angle(joints)
+    passed = angle is not None and abs(angle - 90.0) < 0.001
+    tests_passed += passed
+    print(f"\nTest 2 - compute_right_elbow_angle (90°): {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: 90.0°, Got: {angle:.3f}°" if angle is not None else f"  Got: None")
+
+    # Test 3: compute_left_elbow_angle == compute_elbow_angle(side='LEFT')
+    tests_total += 1
+    angle_wrapper = compute_left_elbow_angle(joints)
+    angle_generic = compute_elbow_angle(joints, side='LEFT')
+    passed = angle_wrapper is not None and abs(angle_wrapper - angle_generic) < 0.001
+    tests_passed += passed
+    print(f"\nTest 3 - Left wrapper equivalence: {'PASS' if passed else 'FAIL'}")
+    print(f"  compute_left_elbow_angle() == compute_elbow_angle(side='LEFT')")
+    print(f"  {angle_wrapper:.3f}° == {angle_generic:.3f}°")
+
+    # Test 4: compute_right_elbow_angle == compute_elbow_angle(side='RIGHT')
+    tests_total += 1
+    angle_wrapper = compute_right_elbow_angle(joints)
+    angle_generic = compute_elbow_angle(joints, side='RIGHT')
+    passed = angle_wrapper is not None and abs(angle_wrapper - angle_generic) < 0.001
+    tests_passed += passed
+    print(f"\nTest 4 - Right wrapper equivalence: {'PASS' if passed else 'FAIL'}")
+    print(f"  compute_right_elbow_angle() == compute_elbow_angle(side='RIGHT')")
+    print(f"  {angle_wrapper:.3f}° == {angle_generic:.3f}°")
+
+    # Test 5: None input
+    tests_total += 1
+    passed = compute_left_elbow_angle(None) is None and compute_right_elbow_angle(None) is None
+    tests_passed += passed
+    print(f"\nTest 5 - None input: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None for both, Got: {compute_left_elbow_angle(None)}, {compute_right_elbow_angle(None)}")
+
+    # Test 6: Missing joints
+    tests_total += 1
+    angle = compute_left_elbow_angle({"LEFT_SHOULDER": (0.0, 0.0)})
+    passed = angle is None
+    tests_passed += passed
+    print(f"\nTest 6 - Missing joints: {'PASS' if passed else 'FAIL'}")
+    print(f"  Expected: None, Got: {angle}")
+
+    print(f"\n{'─' * 70}")
+    print(f"Section 8 Results: {tests_passed}/{tests_total} tests passed")
     assert tests_passed == tests_total, f"Failed! Only {tests_passed}/{tests_total} passed."
